@@ -1,0 +1,26 @@
+# Production profile — PostgreSQL + Redis
+spring:
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:expeditionx}
+    username: ${DB_USERNAME:expeditionx}
+    password: ${DB_PASSWORD:expeditionx}
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+
+  cache:
+    type: redis
+
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+
+logging:
+  level:
+    com.expeditionx: INFO
+    org.hibernate.SQL: WARN

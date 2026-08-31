@@ -1,0 +1,478 @@
+import { useEffect, useRef, useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
+import { motion, useInView, AnimatePresence } from 'framer-motion'
+import {
+  Compass, Map, Zap, Globe, Sparkles, Activity,
+  ChevronRight, Calendar, Users, ArrowUpRight, Plus, MapPin, TrendingUp, Brain
+} from 'lucide-react'
+import { useAuthStore } from '../../stores/authStore'
+import { useSettingsStore } from '../../stores/settingsStore'
+import { formatCurrency, t } from '../../utils/formatters'
+import { placeService } from '../../services/placeService'
+import type { PlaceResponse } from '../../services/placeService'
+import { GlowingEffect } from '@/components/ui/glowing-effect'
+import { useIntelligenceStore } from '../../stores/intelligenceStore'
+import { useTripStore } from '../../stores/tripStore'
+import { useWishlistStore } from '../../stores/wishlistStore'
+import { useBookingStore } from '../../stores/bookingStore'
+
+const FEATURED_TOURS = [
+  {
+    id: 't1',
+    title: 'Golden Triangle Tour',
+    startDate: '2026-08-10',
+    endDate: '2026-08-17',
+    collaborators: 3,
+    spent: 18000,
+    budget: 45000,
+    coverImage: 'https://images.unsplash.com/photo-1524492412937-b28074a5d7da?q=80&w=2071&auto=format&fit=crop'
+  },
+  {
+    id: 't2',
+    title: 'Kyoto Sakura Walk',
+    startDate: '2026-03-25',
+    endDate: '2026-04-05',
+    collaborators: 4,
+    spent: 82000,
+    budget: 120000,
+    coverImage: 'https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?q=80&w=2070&auto=format&fit=crop'
+  },
+  {
+    id: 't3',
+    title: 'Alpine Expedition',
+    startDate: '2026-09-05',
+    endDate: '2026-09-12',
+    collaborators: 2,
+    spent: 35000,
+    budget: 80000,
+    coverImage: 'https://images.unsplash.com/photo-1469334031218-e382a71b716b?q=80&w=2070&auto=format&fit=crop'
+  },
+  {
+    id: 't4',
+    title: 'Santorini Retreat',
+    startDate: '2026-06-10',
+    endDate: '2026-06-18',
+    collaborators: 2,
+    spent: 28000,
+    budget: 65000,
+    coverImage: 'https://images.unsplash.com/photo-1613395877344-13d4a8e0d49e?q=80&w=2070&auto=format&fit=crop'
+  },
+  {
+    id: 't5',
+    title: 'Bali Island Hopping',
+    startDate: '2026-11-01',
+    endDate: '2026-11-15',
+    collaborators: 5,
+    spent: 55000,
+    budget: 100000,
+    coverImage: 'https://images.unsplash.com/photo-1537996194471-e657df975ab4?q=80&w=2038&auto=format&fit=crop'
+  },
+  {
+    id: 't6',
+    title: 'Parisian Getaway',
+    startDate: '2026-05-01',
+    endDate: '2026-05-07',
+    collaborators: 2,
+    spent: 45000,
+    budget: 85000,
+    coverImage: 'https://images.unsplash.com/photo-1499856871958-5b9627545d1a?q=80&w=2070&auto=format&fit=crop'
+  }
+]
+
+function AnimatedCounter({ target, prefix = '', suffix = '' }: { target: number; prefix?: string; suffix?: string }) {
+  const [count, setCount] = useState(0)
+  const ref = useRef<HTMLDivElement>(null)
+  const inView = useInView(ref, { once: true })
+  useEffect(() => {
+    if (!inView) return
+    const duration = 1500
+    const steps = 60
+    let current = 0
+    const inc = target / steps
+    const t = setInterval(() => {
+      current += inc
+      if (current >= target) { setCount(target); clearInterval(t) }
+      else setCount(Math.floor(current))
+    }, duration / steps)
+    return () => clearInterval(t)
+  }, [inView, target])
+  return <div ref={ref} className="font-display font-extrabold tracking-tight">{prefix}{count.toLocaleString()}{suffix}</div>
+}
+
+export function Dashboard() {
+  const { user } = useAuthStore()
+
+
+
+  const { currency, language } = useSettingsStore()
+  const navigate = useNavigate()
+  const [loading, setLoading] = useState(true)
+  const [recommendedDests, setRecommendedDests] = useState<PlaceResponse[]>([])
+  const [activeTourIndex, setActiveTourIndex] = useState(0)
+
+  // ── Intelligence Engine ──
+  const { trips, fetchUserTrips } = useTripStore()
+  const { savedPlaceIds, fetchWishlist } = useWishlistStore()
+  const { myBookings, fetchMyBookings } = useBookingStore()
+  const { profile, budgetForecast, compute } = useIntelligenceStore()
+
+  useEffect(() => {
+    fetchUserTrips()
+    fetchWishlist()
+    fetchMyBookings()
+  }, [])
+
+  useEffect(() => {
+    compute(trips, savedPlaceIds, myBookings, user?.preferences)
+  }, [trips.length, savedPlaceIds.length, myBookings.length])
+
+  useEffect(() => {
+    placeService.getTrendingDestinations().then(data => {
+      if (data) setRecommendedDests(data.slice(0, 4))
+      setLoading(false)
+    }).catch(() => setLoading(false))
+  }, [])
+
+  // Auto-play the featured tours every 4 seconds
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setActiveTourIndex((prev) => (prev + 1) % FEATURED_TOURS.length)
+    }, 4000)
+    return () => clearInterval(interval)
+  }, [])
+
+  const activeTour = FEATURED_TOURS[activeTourIndex]
+
+  // Derive personalized greeting from real DNA
+  const topTrait = profile ? (() => {
+    const dna = profile.dna
+    const traits = { adventure: dna.adventure, nature: dna.nature, luxury: dna.luxury, budget: dna.budget, foodie: dna.foodie, cultural: dna.cultural }
+    const top = Object.entries(traits).sort((a, b) => b[1] - a[1])[0]
+    const labels: Record<string, string> = { adventure: '🏔️ Adventure', nature: '🌿 Nature', luxury: '✨ Luxury', budget: '💡 Budget', foodie: '🍜 Foodie', cultural: '🏛️ Cultural' }
+    return labels[top[0]] || '✈️ Explorer'
+  })() : null
+
+  // Destination recommendation reasons based on real profile
+  const getRecommendationReason = (dest: PlaceResponse, idx: number): string => {
+    if (!profile) return 'Trending destination'
+    const topDests = profile.topDestinations
+    const topTypes = profile.topTypes
+    if (topDests.length > 0 && idx === 0) return `Because you saved ${topDests[0]}`
+    if (topTypes.includes('Hill Station')) return 'Matches your love for hill stations'
+    if (topTypes.includes('Beach')) return 'Suits your beach travel style'
+    if (topTypes.includes('Heritage')) return 'Matches your heritage interest'
+    return 'Trending & matches your style'
+  }
+
+  return (
+    <div className="min-h-screen bg-[var(--bg-primary)] p-6 lg:p-10 font-sans text-[#1B2A4A] relative overflow-hidden">
+      
+      <div className="max-w-[1500px] mx-auto relative z-10 pt-4">
+        
+        {/* ── HEADER ── */}
+        <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-16">
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
+
+            <h1 className="text-5xl md:text-6xl font-display font-black tracking-tighter text-[var(--text-primary)] leading-[1.1] drop-shadow-sm">
+              {t('Welcome back', language)}, {(()=>{
+                const rawName = user?.name?.split(' ')[0] || '';
+                if (rawName.match(/^[a-z]+[0-9]+$/i) || rawName === rawName.toLowerCase()) {
+                  // Clean up corrupted email prefix names instantly
+                  const cleaned = rawName.replace(/[0-9]/g, '');
+                  return cleaned ? cleaned.charAt(0).toUpperCase() + cleaned.slice(1) : rawName;
+                }
+                return rawName;
+              })()}
+            </h1>
+          </motion.div>
+          
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.1 }}>
+            <button 
+              onClick={() => navigate('/app/planner/setup')}
+              className="relative group flex items-center gap-3 bg-gradient-to-r from-[#FC6C26] to-[#FC6C26] text-white px-8 py-4 rounded-[20px] font-black tracking-tighter text-[16px] transition-all duration-300 hover:scale-[1.03] hover:-translate-y-1 shadow-[0_25px_50px_-12px_rgba(252, 108, 38,0.6)] drop-shadow-sm"
+            >
+              <GlowingEffect spread={40} glow={true} disabled={false} proximity={64} inactiveZone={0.01} borderWidth={3} variant="white" />
+              <div className="w-6 h-6 rounded-full bg-[var(--bg-card)]/20 flex items-center justify-center group-hover:rotate-90 transition-transform duration-500 relative z-10">
+                <Plus size={16} className="text-white" />
+              </div>
+              <span className="relative z-10">{t('Initialize New Trip', language)}</span>
+            </button>
+          </motion.div>
+        </header>
+
+        {/* ── TRAVEL DNA GREETING CARD ── */}
+        {/* Feature removed per user request */}
+
+        <div className="grid grid-cols-1 xl:grid-cols-12 gap-10">
+          
+          {/* ── LEFT COLUMN ── */}
+          <div className="xl:col-span-8 space-y-10">
+            
+            {/* Telemetry Cards & AI Chatbot */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              
+              {/* Left: AI Chatbot (Exact same size as the 4 features block) */}
+              <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.2 }}
+                className="relative group rounded-[32px] h-full min-h-[350px]"
+              >
+                <GlowingEffect spread={40} glow={true} disabled={false} proximity={64} inactiveZone={0.01} borderWidth={3} />
+                <div className="bg-[var(--bg-card)]/80 backdrop-blur-ultra rounded-[32px] p-2 shadow-ultra border border-[var(--border-subtle)]/50 relative overflow-hidden transition-shadow duration-500 h-full w-full">
+                  <iframe 
+                    src={`https://www.jotform.com/agent/019f7b5c2ff8700084d42bce570d5896f70d?v=${Date.now()}`}
+                    className="w-full h-full rounded-[inherit] border-none"
+                    title="Jotform AI Agent"
+                  />
+                </div>
+              </motion.div>
+
+              {/* Right: The 4 Features (2x2 Grid) */}
+              <div className="grid grid-cols-2 gap-6">
+                {[
+                  { label: t('Global Footprint', language), value: 12, suffix: ` ${t('Cities', language)}`, icon: Globe, color: '#384D7E', bg: 'rgba(56, 77, 126, 0.15)' },
+                  { label: t('Total Expeditions', language), value: 7, suffix: '', icon: Compass, color: '#1B2A4A', bg: 'var(--bg-secondary)' },
+                  { label: t('AI Budget Saved', language), value: 42000, isCurrency: true, icon: Zap, color: '#FC6C26', bg: 'rgba(252, 108, 38, 0.15)' },
+                  { label: t('Explorer Level', language), value: user?.explorerLevel || 3, suffix: '', icon: Activity, color: '#3fa796', bg: 'rgba(63, 167, 150, 0.15)' },
+                ].map((stat, i) => (
+                  <motion.div
+                    key={stat.label}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.3 + (i * 0.1) }}
+                    className="relative group rounded-[32px] hover:-translate-y-1 transition-transform duration-500 h-full"
+                  >
+                    <GlowingEffect spread={40} glow={true} disabled={false} proximity={64} inactiveZone={0.01} borderWidth={3} />
+                    <div className="bg-[var(--bg-card)]/80 backdrop-blur-ultra rounded-[32px] p-2 shadow-ultra border border-[var(--border-subtle)]/50 relative overflow-hidden hover:shadow-[0_35px_60px_-15px_rgba(0,0,0,0.15)] transition-shadow duration-500 h-full w-full">
+                      <div className="relative z-10 p-5 xl:p-6">
+                        <div className="flex justify-between items-start mb-6 xl:mb-8 relative z-10">
+                          <div className="w-10 h-10 xl:w-12 xl:h-12 rounded-[16px] flex items-center justify-center transition-transform duration-500 group-hover:scale-110" style={{ backgroundColor: stat.bg }}>
+                            <stat.icon size={20} className="xl:w-[22px] xl:h-[22px]" style={{ color: stat.color }} />
+                          </div>
+                          <ArrowUpRight size={18} className="text-[var(--text-muted)] group-hover:text-[#FC6C26] transition-colors" />
+                        </div>
+                        
+                        <div className="relative z-10">
+                          <div className="text-2xl xl:text-4xl text-[var(--text-primary)] mb-1 font-black flex items-baseline tracking-tighter drop-shadow-sm">
+                            {stat.isCurrency ? formatCurrency(stat.value, currency) : <AnimatedCounter target={stat.value} prefix={(stat as any).prefix} />}
+                          </div>
+                          <p className="text-[10px] xl:text-[11px] font-extrabold uppercase tracking-[0.2em] text-[var(--text-secondary)] mt-2">{stat.label}</p>
+                          {stat.suffix && <p className="text-[12px] xl:text-[13px] font-extrabold text-[var(--text-secondary)] mt-1">{stat.suffix}</p>}
+                        </div>
+                      </div>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            </div>
+
+            {/* Auto-Playing Featured Expeditions Console */}
+            <div className="relative w-full group/console mt-4 mb-4">
+              {/* Attention-Seeking Ambient Glowing Orbs Behind the Card */}
+              <div className="absolute top-0 right-[10%] w-[400px] h-[400px] bg-[#FC6C26] rounded-full blur-[100px] opacity-[0.15] mix-blend-multiply pointer-events-none group-hover/console:scale-110 transition-transform duration-1000" />
+              <div className="absolute bottom-0 left-[10%] w-[500px] h-[500px] bg-[#3fa796] rounded-full blur-[120px] opacity-[0.15] mix-blend-multiply pointer-events-none group-hover/console:scale-110 transition-transform duration-1000 delay-100" />
+              
+              <motion.div 
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.4 }}
+                className="relative group rounded-[40px] w-full"
+              >
+                <GlowingEffect spread={40} glow={true} disabled={false} proximity={64} inactiveZone={0.01} borderWidth={3} />
+                <div className="bg-[var(--bg-card)] rounded-[40px] overflow-hidden shadow-[0_40px_100px_-20px_rgba(0,0,0,0.1)] border border-[var(--border-subtle)] relative min-h-[460px] flex items-center w-full">
+                {/* Extremely subtle glass highlight gradient */}
+                <div className="absolute inset-0 bg-gradient-to-tr from-[var(--bg-card-hover)] to-transparent opacity-50 pointer-events-none" />
+
+              <div className="p-8 lg:p-12 relative z-10 flex flex-col md:flex-row gap-12 items-center w-full">
+                
+                <div className="flex-1 w-full relative">
+                  <div className="flex items-center gap-3 mb-8">
+                    <div className="bg-[var(--bg-secondary)] p-2 rounded-xl shadow-sm border border-[var(--border-subtle)]">
+                      <Sparkles size={16} className="text-[#FC6C26]" />
+                    </div>
+                    <span className="text-[11px] font-bold tracking-[0.2em] uppercase text-[var(--text-secondary)]">{t('Featured Expeditions', language)}</span>
+                  </div>
+                  
+                  <div className="relative h-[280px]">
+                    <AnimatePresence mode="wait">
+                      <motion.div
+                        key={activeTour.id}
+                        initial={{ opacity: 0, y: 15, filter: 'blur(5px)' }}
+                        animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+                        exit={{ opacity: 0, y: -15, filter: 'blur(5px)' }}
+                        transition={{ duration: 0.4, ease: "easeInOut" }}
+                        className="absolute inset-0"
+                      >
+                        <h2 className="text-4xl lg:text-5xl font-display font-black tracking-tighter text-[var(--text-primary)] mb-8 leading-[1.1] drop-shadow-sm">
+                          {activeTour.title}
+                        </h2>
+                        
+                        <div className="flex flex-wrap items-center gap-3 text-[var(--text-primary)] font-medium text-[15px] mb-8">
+                          <span className="flex items-center gap-2 bg-[var(--bg-card)] px-5 py-3 rounded-[16px] shadow-sm border border-[var(--border-subtle)]">
+                            <Calendar size={18} className="text-[#3fa796]" />
+                            {new Date(activeTour.startDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })} — {new Date(activeTour.endDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+                          </span>
+                          <span className="flex items-center gap-2 bg-[var(--bg-card)] px-5 py-3 rounded-[16px] shadow-sm border border-[var(--border-subtle)]">
+                            <Users size={18} className="text-[#3fa796]" />
+                            {activeTour.collaborators} Explorers
+                          </span>
+                        </div>
+
+                        <div className="bg-[var(--bg-card)] rounded-[24px] p-6 shadow-[0_15px_40px_-10px_rgba(0,0,0,0.03)] border border-[var(--border-subtle)] relative overflow-hidden">
+                          <div className="flex justify-between items-end mb-4 relative z-10">
+                            <div>
+                              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--text-muted)] mb-2">{t('Financial Telemetry', language)}</p>
+                              <p className="text-2xl font-extrabold text-[var(--text-primary)] tracking-tight">
+                                {formatCurrency(activeTour.spent, currency)} <span className="text-xl text-[var(--text-muted)] font-bold tracking-normal">/ {formatCurrency(activeTour.budget, currency)}</span>
+                              </p>
+                            </div>
+                            <div className="bg-[var(--bg-secondary)] px-3 py-1.5 rounded-lg border border-[var(--border-subtle)]">
+                              <span className="text-[#FC6C26] font-bold text-[14px]">{Math.round((activeTour.spent/activeTour.budget)*100)}%</span>
+                            </div>
+                          </div>
+                          
+                          <div className="h-2 w-full bg-[var(--bg-card)] rounded-full overflow-hidden relative z-10">
+                            <motion.div 
+                              initial={{ width: 0 }}
+                              animate={{ width: `${(activeTour.spent/activeTour.budget)*100}%` }}
+                              transition={{ duration: 1.5, delay: 0.2 }}
+                              className="h-full bg-gradient-to-r from-[#FC6C26] to-[#FC6C26] rounded-full"
+                            />
+                          </div>
+                        </div>
+                      </motion.div>
+                    </AnimatePresence>
+                  </div>
+
+                  {/* Navigation Indicators */}
+                  <div className="flex gap-3 mt-8">
+                    {FEATURED_TOURS.map((_, idx) => (
+                      <button 
+                        key={idx}
+                        onClick={() => setActiveTourIndex(idx)}
+                        className={`h-2 rounded-full transition-all duration-500 shadow-sm ${idx === activeTourIndex ? 'w-10 bg-[#FC6C26] shadow-[0_0_10px_rgba(252, 108, 38,0.5)]' : 'w-2 bg-[var(--border-subtle)] hover:bg-[var(--text-muted)]'}`}
+                        aria-label={`Go to tour ${idx + 1}`}
+                      />
+                    ))}
+                  </div>
+                </div>
+
+                <div className="w-full md:w-[320px] shrink-0 h-[380px]">
+                  <AnimatePresence mode="wait">
+                    <motion.div
+                      key={activeTour.id}
+                      initial={{ opacity: 0, scale: 0.95, rotate: -2 }}
+                      animate={{ opacity: 1, scale: 1, rotate: 0 }}
+                      exit={{ opacity: 0, scale: 1.05, rotate: 2 }}
+                      transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+                      className="w-full h-full"
+                    >
+                      <div className="w-full h-full rounded-[32px] overflow-hidden relative shadow-[0_30px_60px_-15px_rgba(0,0,0,0.15)] border-[6px] border-[var(--bg-secondary)] group/img cursor-pointer" onClick={() => navigate(`/app/trips/${activeTour.id}`)}>
+                        <img src={activeTour.coverImage} alt={activeTour.title} className="w-full h-full object-cover transition-transform duration-1000 group-hover/img:scale-110" />
+                        
+                        <div className="absolute inset-0 bg-gradient-to-t from-[#1B2A4A] via-[#1B2A4A]/10 to-transparent opacity-80 transition-opacity duration-500 group-hover/img:opacity-60" />
+                        
+                        <div className="absolute bottom-6 left-6 right-6">
+                          <button className="w-full bg-black/40 backdrop-blur-xl border border-white/40 text-white py-4 rounded-[20px] font-bold text-[15px] hover:bg-[#FC6C26] hover:border-[#FC6C26] hover:text-white transition-all duration-300 flex items-center justify-center gap-2 group/btn shadow-[0_10px_30px_rgba(0,0,0,0.2)]">
+                            {t('Access Console', language)} <ChevronRight size={18} className="group-hover/btn:translate-x-1 transition-transform" />
+                          </button>
+                        </div>
+                      </div>
+                    </motion.div>
+                  </AnimatePresence>
+                </div>
+              </div>
+              </div>
+            </motion.div>
+            </div>
+
+          </div>
+
+          {/* ── RIGHT COLUMN ── */}
+          <div className="xl:col-span-4 space-y-10">
+            
+            {/* AI Travel Radar */}
+            <motion.div 
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.5 }}
+              className="relative group rounded-[32px]"
+            >
+              <GlowingEffect spread={40} glow={true} disabled={false} proximity={64} inactiveZone={0.01} borderWidth={3} />
+              <div className="bg-[var(--bg-card)] rounded-[32px] p-8 lg:p-10 shadow-[0_20px_50px_-10px_rgba(0,0,0,0.04)] border border-[var(--border-subtle)] relative overflow-hidden h-full">
+              <div className="flex items-center justify-between mb-10 relative z-10">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-[16px] bg-[var(--bg-secondary)] flex items-center justify-center">
+                    <MapPin size={22} className="text-[#FC6C26]" />
+                  </div>
+                  <div>
+                    <h3 className="font-display font-black text-[22px] text-[var(--text-primary)] tracking-tighter drop-shadow-sm">{t('AI Travel Radar', language)}</h3>
+                    <p className="text-[10px] font-extrabold text-[var(--text-secondary)] uppercase tracking-[0.2em] mt-1">{t('Predictive Matches', language)}</p>
+                  </div>
+                </div>
+                <button onClick={() => navigate('/app/explore')} className="text-[#FC6C26] hover:bg-[#FC6C26] hover:text-white p-3 rounded-[14px] transition-colors">
+                  <ArrowUpRight size={20} />
+                </button>
+              </div>
+
+              <div className="space-y-6 relative z-10">
+                {recommendedDests.map((dest, idx) => (
+                  <div key={dest.id} onClick={() => navigate(`/app/explore/search?q=${dest.name}`)} className="group flex gap-5 items-center cursor-pointer">
+                    <div className="relative w-[76px] h-[76px] rounded-[18px] overflow-hidden shrink-0 shadow-sm border border-[var(--border-subtle)]">
+                      <img src={dest.imageUrl || (dest as any).image} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" alt={dest.name} />
+                      <div className="absolute top-1 left-1 bg-[var(--bg-card)]/90 backdrop-blur-md text-[#1B2A4A] text-[10px] font-bold px-1.5 py-0.5 rounded-[6px]">
+                        #{idx + 1}
+                      </div>
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="font-extrabold tracking-tight text-[16px] text-[var(--text-primary)] group-hover:text-[#FC6C26] transition-colors">{dest.name}</h4>
+                      <p className="text-[13px] text-[var(--text-secondary)] font-medium mb-1">{dest.country || t('Global Destination', language)}</p>
+                      <div className="flex items-center">
+                        <span className="text-[11px] font-bold text-[#FC6C26] bg-[var(--bg-secondary)] px-2.5 py-1 rounded-[8px] border border-[var(--border-subtle)]">
+                          {getRecommendationReason(dest, idx)}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+                </div>
+              </div>
+            </motion.div>
+
+            {/* Quick Command Modules */}
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.6 }}
+              className="grid grid-cols-2 gap-4 lg:gap-6"
+            >
+              <div onClick={() => navigate('/app/planner/map')} className="relative bg-[var(--bg-card)] p-2 rounded-[32px] cursor-pointer hover:-translate-y-2 hover:shadow-[0_20px_40px_rgba(0,0,0,0.06)] transition-all duration-500 group border border-[var(--border-subtle)]">
+                <GlowingEffect spread={40} glow={true} disabled={false} proximity={64} inactiveZone={0.01} borderWidth={3} />
+                <div className="relative z-10 bg-[var(--bg-secondary)] h-full rounded-[24px] p-6 lg:p-8">
+                  <div className="w-14 h-14 rounded-[16px] bg-[var(--bg-card)] flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-500 shadow-sm border border-[var(--border-subtle)]">
+                    <Map size={24} className="text-[#384D7E]" />
+                  </div>
+                  <h4 className="font-extrabold tracking-tight text-[var(--text-primary)] text-[17px] mb-1">{t('Interactive Maps', language)}</h4>
+                  <p className="text-[12px] text-[var(--text-secondary)] font-medium mt-2">{t('Route visualization', language)}</p>
+                </div>
+              </div>
+              
+              <div onClick={() => navigate('/app/explore')} className="relative bg-[var(--bg-card)] p-2 rounded-[32px] cursor-pointer hover:-translate-y-2 hover:shadow-[0_20px_40px_rgba(0,0,0,0.06)] transition-all duration-500 group border border-[var(--border-subtle)]">
+                <GlowingEffect spread={40} glow={true} disabled={false} proximity={64} inactiveZone={0.01} borderWidth={3} />
+                <div className="relative z-10 bg-[var(--bg-secondary)] h-full rounded-[24px] p-6 lg:p-8">
+                  <div className="w-14 h-14 rounded-[16px] bg-[var(--bg-card)] flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-500 shadow-sm border border-[var(--border-subtle)]">
+                    <Zap size={24} className="text-[#FC6C26]" />
+                  </div>
+                  <h4 className="font-extrabold tracking-tight text-[var(--text-primary)] text-[17px] mb-1">{t('Surprise Me', language)}</h4>
+                  <p className="text-[12px] text-[var(--text-secondary)] font-medium mt-2">{t('AI generated trips', language)}</p>
+                </div>
+              </div>
+            </motion.div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}

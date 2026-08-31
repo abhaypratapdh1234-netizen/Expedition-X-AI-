@@ -1,0 +1,120 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: ExpeditionX-AI-Backend
+  
+  config:
+    import: optional:file:.env[.properties], optional:file:../.env[.properties]
+
+  profiles:
+    active: dev
+
+  # Autoconfigure
+  # exclude:
+
+  datasource:
+    url: jdbc:h2:file:./data/expeditionx;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE;AUTO_SERVER=TRUE
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false
+    default-property-inclusion: non_null
+
+  jpa:
+    database-platform: org.hibernate.dialect.H2Dialect
+    open-in-view: false
+    hibernate:
+      ddl-auto: update
+    defer-datasource-initialization: true
+    properties:
+      hibernate:
+        format_sql: true
+    show-sql: false
+
+  sql:
+    init:
+      mode: always
+
+  cache:
+    type: redis
+
+  data:
+    redis:
+      url: ${REDIS_URL:redis://localhost:6379}
+
+  mail:
+    host: ${SMTP_HOST:smtp-relay.brevo.com}
+    port: ${SMTP_PORT:587}
+    username: ${SMTP_USER:}
+    password: ${SMTP_PASSWORD:}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+
+
+
+# JWT
+app:
+  jwt:
+    secret: ${JWT_SECRET:ExpeditionXAI2026SuperSecretKeyThatIsLongEnoughForHS512Algorithm!!}
+    access-token-expiry: 315360000000      # 10 years
+    refresh-token-expiry: 3153600000000  # 100 years
+
+  cors:
+    allowed-origins: http://localhost:5173,http://localhost:3000
+
+  # External API keys (free tiers — sign up and set via env vars)
+  # External API keys
+  api:
+    opentripmap: ${OPENTRIPMAP_API_KEY:}
+    openweather: ${OPENWEATHER_API_KEY:}
+    unsplash: ${UNSPLASH_ACCESS_KEY:}
+    cloudinary-cloud-name: ${CLOUDINARY_CLOUD_NAME:}
+    cloudinary-api-key: ${CLOUDINARY_API_KEY:}
+    cloudinary-api-secret: ${CLOUDINARY_API_SECRET:}
+    amadeus-client-id: ${AMADEUS_CLIENT_ID:}
+    amadeus-client-secret: ${AMADEUS_CLIENT_SECRET:}
+    osrm-base-url: ${OSRM_BASE_URL:https://router.project-osrm.org}
+    gemini-api-key: ${GEMINI_API_KEY:}
+    timezonedb: ${TIMEZONE_API_KEY:}
+    ipgeo: ${IPGEOLOCATION_API_KEY:}
+    pixabay: ${PIXABAY_API_KEY:}
+    pexels: ${PEXELS_API_KEY:}
+    exchangerate: ${EXCHANGE_RATE_API_KEY:}
+
+# Swagger
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    tags-sorter: alpha
+    operations-sorter: method
+
+# Actuator
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: when-authorized
+
+logging:
+  level:
+    com.expeditionx: DEBUG
+    org.hibernate.SQL: WARN
