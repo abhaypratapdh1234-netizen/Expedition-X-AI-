@@ -2,9 +2,10 @@ import { useEffect, useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { motion, useInView, AnimatePresence } from 'framer-motion'
 import {
-  Compass, Map, Zap, Globe, Sparkles, Activity,
-  ChevronRight, Calendar, Users, ArrowUpRight, Plus, MapPin, TrendingUp, Brain
+  Compass, Zap, Globe, Sparkles, Activity,
+  ChevronRight, Calendar, Users, ArrowUpRight, Plus, MapPin, Brain, Bot, Send, X
 } from 'lucide-react'
+
 import { useAuthStore } from '../../stores/authStore'
 import { useSettingsStore } from '../../stores/settingsStore'
 import { formatCurrency, t } from '../../utils/formatters'
@@ -15,6 +16,9 @@ import { useIntelligenceStore } from '../../stores/intelligenceStore'
 import { useTripStore } from '../../stores/tripStore'
 import { useWishlistStore } from '../../stores/wishlistStore'
 import { useBookingStore } from '../../stores/bookingStore'
+import { useThemeStore } from '../../stores/themeStore'
+import { aiService } from '../../services/aiService'
+import { ChatMessageRenderer } from '../../components/ai/ChatMessageRenderer'
 
 const FEATURED_TOURS = [
   {
@@ -101,14 +105,53 @@ function AnimatedCounter({ target, prefix = '', suffix = '' }: { target: number;
 
 export function Dashboard() {
   const { user } = useAuthStore()
-
-
+  const theme = useThemeStore(s => s.theme)
+  const isDark = theme === 'dark'
+  const isMonochrome = theme === 'monochrome'
 
   const { currency, language } = useSettingsStore()
   const navigate = useNavigate()
   const [loading, setLoading] = useState(true)
   const [recommendedDests, setRecommendedDests] = useState<PlaceResponse[]>([])
   const [activeTourIndex, setActiveTourIndex] = useState(0)
+
+  // Mini Chatbot State
+  const [chatInput, setChatInput] = useState('')
+  const [chatMessages, setChatMessages] = useState<{role: 'user'|'ai', text: string, time: string}[]>([
+    {
+      role: 'ai', 
+      text: "Hello! I am Max AI, your luxury travel concierge. I can help you draft itineraries, check the weather, estimate travel budgets, and build custom packing lists. Ask me anything! ✈️ 🌴",
+      time: "01:28 pm"
+    }
+  ])
+  const [chatLoading, setChatLoading] = useState(false)
+  const chatEndRef = useRef<HTMLDivElement>(null)
+
+  const handleSendChat = async (presetText?: string) => {
+    const textToSend = presetText || chatInput.trim()
+    if(!textToSend) return
+    setChatInput('')
+    
+    const now = new Date()
+    const timeStr = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}).toLowerCase()
+    
+    setChatMessages(prev => [...prev, {role: 'user', text: textToSend, time: timeStr}])
+    setChatLoading(true)
+    try {
+      const response = await aiService.processChatQuery(textToSend);
+      const resTime = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}).toLowerCase()
+      setChatMessages(prev => [...prev, {role: 'ai', text: response.response, time: resTime}])
+    } catch (err) {
+      const errTime = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}).toLowerCase()
+      setChatMessages(prev => [...prev, {role: 'ai', text: "Network error connecting to Max AI.", time: errTime}])
+    } finally {
+      setChatLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }, [chatMessages, chatLoading])
 
   // ── Intelligence Engine ──
   const { trips, fetchUserTrips } = useTripStore()
@@ -211,20 +254,221 @@ export function Dashboard() {
             {/* Telemetry Cards & AI Chatbot */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               
-              {/* Left: AI Chatbot (Exact same size as the 4 features block) */}
+              {/* Left: AI Chatbot (Theme-Aware Exact Match) */}
               <motion.div
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.2 }}
-                className="relative group rounded-[32px] h-full min-h-[350px]"
+                className="relative group rounded-2xl h-full min-h-[420px] overflow-hidden border transition-all"
+                style={{
+                  background: isDark ? '#111111' : isMonochrome ? '#0D0D0D' : 'var(--bg-card)',
+                  borderColor: isDark ? '#262626' : isMonochrome ? '#333333' : 'var(--border-default)',
+                  boxShadow: isDark ? '0 10px 30px rgba(0,0,0,0.5)' : isMonochrome ? 'none' : 'var(--shadow-card)'
+                }}
               >
-                <GlowingEffect spread={40} glow={true} disabled={false} proximity={64} inactiveZone={0.01} borderWidth={3} />
-                <div className="bg-[var(--bg-card)]/80 backdrop-blur-ultra rounded-[32px] p-2 shadow-ultra border border-[var(--border-subtle)]/50 relative overflow-hidden transition-shadow duration-500 h-full w-full">
-                  <iframe 
-                    src={`https://www.jotform.com/agent/019f7b5c2ff8700084d42bce570d5896f70d?v=${Date.now()}`}
-                    className="w-full h-full rounded-[inherit] border-none"
-                    title="Jotform AI Agent"
-                  />
+                <div className="relative h-full w-full flex flex-col">
+                  
+                  {/* Chat Header */}
+                  <div 
+                    className="p-4 px-5 flex items-center justify-between text-white transition-all"
+                    style={{
+                      background: isDark 
+                        ? 'linear-gradient(135deg, #1C1C1E 0%, #121214 100%)' 
+                        : isMonochrome 
+                        ? 'linear-gradient(135deg, #0A0A0A 0%, #161616 100%)' 
+                        : 'linear-gradient(135deg, #1B2A4A 0%, #293B63 100%)',
+                      borderBottom: `1px solid ${isDark ? '#28282B' : isMonochrome ? '#333333' : 'rgba(255, 255, 255, 0.1)'}`
+                    }}
+                  >
+                    <div className="flex items-center gap-3">
+                      <div 
+                        className="w-12 h-12 rounded-full border flex items-center justify-center shadow-sm"
+                        style={{
+                          background: isMonochrome ? 'rgba(255, 255, 255, 0.1)' : 'rgba(252, 108, 38, 0.15)',
+                          borderColor: isMonochrome ? 'rgba(255, 255, 255, 0.2)' : 'rgba(252, 108, 38, 0.3)'
+                        }}
+                      >
+                        <Sparkles 
+                          size={20} 
+                          style={{ color: isMonochrome ? '#FFFFFF' : '#FC6C26' }} 
+                        />
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <h3 className="font-extrabold text-white text-lg tracking-tight leading-none uppercase">MAX AI</h3>
+                          <span 
+                            className="text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider backdrop-blur-sm"
+                            style={{
+                              background: isMonochrome ? 'rgba(255, 255, 255, 0.2)' : 'rgba(252, 108, 38, 0.25)',
+                              color: isMonochrome ? '#ffffff' : '#FC6C26',
+                              border: `1px solid ${isMonochrome ? 'rgba(255, 255, 255, 0.3)' : 'rgba(252, 108, 38, 0.4)'}`
+                            }}
+                          >
+                            Concierge
+                          </span>
+                        </div>
+                        <p 
+                          className="text-[13px] font-medium mt-1"
+                          style={{ color: isDark ? '#94A3B8' : isMonochrome ? '#888888' : 'rgba(255, 255, 255, 0.8)' }}
+                        >
+                          Online & ready to assist
+                        </p>
+                      </div>
+                    </div>
+                    <button 
+                      className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors cursor-pointer"
+                      title="Clear chat"
+                      onClick={() => setChatMessages([{
+                        role: 'ai',
+                        text: "Hello! I am Max AI, your luxury travel concierge. I can help you draft itineraries, check the weather, estimate travel budgets, and build custom packing lists. Ask me anything! ✈️ 🌴",
+                        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }).toLowerCase()
+                      }])}
+                    >
+                      <X size={16} className="text-white" />
+                    </button>
+                  </div>
+
+                  {/* Chat Messages */}
+                  <div 
+                    className="flex-1 overflow-y-auto p-4 px-5 space-y-6 pb-2 custom-scrollbar transition-colors"
+                    style={{
+                      background: isDark ? '#0A0A0C' : isMonochrome ? '#000000' : 'var(--bg-primary)'
+                    }}
+                  >
+                    <AnimatePresence initial={false}>
+                    {chatMessages.map((msg, i) => (
+                      <motion.div
+                        key={i}
+                        initial={{ opacity: 0, y: 14, scale: 0.97 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+                        className={`flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'}`}
+                      >
+                        {/* User typing echo — orange gradient pill */}
+                        {msg.role === 'user' ? (
+                          <div className="max-w-[82%] px-5 py-3 rounded-[22px] rounded-br-sm shadow-lg relative overflow-hidden"
+                            style={{
+                              background: isMonochrome
+                                ? '#ffffff'
+                                : 'linear-gradient(135deg,#FC6C26 0%,#e85d1a 100%)',
+                              color: isMonochrome ? '#000' : '#fff',
+                              boxShadow: isMonochrome
+                                ? '0 6px 20px rgba(0,0,0,0.4)'
+                                : '0 8px 24px rgba(252,108,38,0.4)'
+                            }}
+                          >
+                            <div className="absolute inset-0 bg-gradient-to-b from-white/15 to-transparent pointer-events-none" />
+                            <p className="text-[14.5px] font-semibold leading-snug relative z-10">{msg.text}</p>
+                          </div>
+                        ) : (
+                          /* AI answer — full-width premium renderer */
+                          <div className="w-full rounded-[20px] rounded-bl-sm border px-4 py-3 shadow-sm"
+                            style={{
+                              background: isDark ? '#12141a' : isMonochrome ? '#161616' : 'var(--bg-card)',
+                              borderColor: isDark ? '#242731' : isMonochrome ? '#2b2b2b' : 'var(--border-subtle)',
+                              ...(isMonochrome ? { '--text-primary': '#ffffff', '--text-secondary': '#e0e0e0' } : {})
+                            } as React.CSSProperties}
+                          >
+                            <ChatMessageRenderer content={msg.text} isUser={false} />
+                          </div>
+                        )}
+                        <span
+                          className="text-[10px] mt-1.5 font-semibold px-1 tracking-wider uppercase"
+                          style={{ color: isDark ? '#52525B' : isMonochrome ? '#555' : 'var(--text-muted)' }}
+                        >
+                          {msg.time}
+                        </span>
+                      </motion.div>
+                    ))}
+                    </AnimatePresence>
+                    {chatLoading && (
+                      <div className="flex justify-start">
+                         <div 
+                           className="p-4 rounded-[20px] rounded-bl-sm border flex items-center gap-1.5 shadow-sm"
+                           style={{
+                             background: isDark ? '#18181B' : isMonochrome ? '#161616' : 'var(--bg-card)',
+                             borderColor: isDark ? '#27272A' : isMonochrome ? '#2E2E2E' : 'var(--border-subtle)'
+                           }}
+                         >
+                           <motion.div className="w-1.5 h-1.5 rounded-full bg-[#FC6C26]" animate={{ y: [0, -4, 0] }} transition={{ repeat: Infinity, duration: 0.6 }} />
+                           <motion.div className="w-1.5 h-1.5 rounded-full bg-[#FC6C26]" animate={{ y: [0, -4, 0] }} transition={{ repeat: Infinity, duration: 0.6, delay: 0.2 }} />
+                           <motion.div className="w-1.5 h-1.5 rounded-full bg-[#FC6C26]" animate={{ y: [0, -4, 0] }} transition={{ repeat: Infinity, duration: 0.6, delay: 0.4 }} />
+                         </div>
+                      </div>
+                    )}
+                    <div ref={chatEndRef} />
+                  </div>
+
+                  {/* Quick Suggestions & Input */}
+                  <div 
+                    className="px-4 pb-4 pt-2 flex flex-col gap-3 transition-colors"
+                    style={{
+                      background: isDark ? '#121214' : isMonochrome ? '#0A0A0A' : 'var(--bg-card)',
+                      borderTop: `1px solid ${isDark ? '#222224' : isMonochrome ? '#222222' : 'var(--border-subtle)'}`
+                    }}
+                  >
+                    
+                    {/* Pills */}
+                    <div className="flex items-center gap-2 overflow-x-auto custom-scrollbar pb-1">
+                      <button 
+                        onClick={() => handleSendChat('Suggest local attractions 🏰')}
+                        className="whitespace-nowrap px-4 py-2 rounded-full text-sm font-semibold transition-all shrink-0 border cursor-pointer hover:border-[#FC6C26]"
+                        style={{
+                          background: isDark ? '#18181B' : isMonochrome ? '#141414' : 'var(--bg-primary)',
+                          color: isDark || isMonochrome ? '#ffffff' : 'var(--text-primary)',
+                          borderColor: isDark ? '#2E2E32' : isMonochrome ? '#333333' : 'var(--border-default)',
+                        }}
+                      >
+                        Suggest local attractions 🏰
+                      </button>
+                      <button 
+                        onClick={() => handleSendChat('Check weather in Goa 🌴')}
+                        className="whitespace-nowrap px-4 py-2 rounded-full text-sm font-semibold transition-all shrink-0 border cursor-pointer hover:border-[#FC6C26]"
+                        style={{
+                          background: isDark ? '#18181B' : isMonochrome ? '#141414' : 'var(--bg-primary)',
+                          color: isDark || isMonochrome ? '#ffffff' : 'var(--text-primary)',
+                          borderColor: isDark ? '#2E2E32' : isMonochrome ? '#333333' : 'var(--border-default)',
+                        }}
+                      >
+                        Check weather in Goa 🌴
+                      </button>
+                    </div>
+
+                    {/* Text Input Box */}
+                    <div 
+                      className="flex items-center rounded-full border p-1.5 pr-2 transition-colors focus-within:border-[#FC6C26]"
+                      style={{
+                        background: isDark ? '#18181B' : isMonochrome ? '#141414' : 'var(--bg-primary)',
+                        borderColor: isDark ? '#2E2E32' : isMonochrome ? '#333333' : 'var(--border-default)',
+                      }}
+                    >
+                      <input 
+                        type="text"
+                        value={chatInput}
+                        onChange={e => setChatInput(e.target.value)}
+                        onKeyDown={e => e.key === 'Enter' && handleSendChat()}
+                        placeholder="Ask Max AI..."
+                        className="flex-1 bg-transparent pl-4 pr-3 py-2 text-[15px] outline-none"
+                        style={{
+                          color: isDark || isMonochrome ? '#ffffff' : 'var(--text-primary)',
+                        }}
+                      />
+                      <button 
+                        onClick={() => handleSendChat()}
+                        disabled={!chatInput.trim() || chatLoading}
+                        className="w-10 h-10 rounded-full flex items-center justify-center disabled:opacity-40 transition-all shrink-0 cursor-pointer shadow-sm hover:scale-105 active:scale-95"
+                        style={{
+                          background: isMonochrome 
+                            ? '#ffffff' 
+                            : 'linear-gradient(135deg, #FC6C26 0%, #e85d1a 100%)',
+                          color: isMonochrome ? '#000000' : '#ffffff',
+                        }}
+                      >
+                        <Send size={16} className="-ml-0.5" />
+                      </button>
+                    </div>
+
+                  </div>
                 </div>
               </motion.div>
 
@@ -445,27 +689,23 @@ export function Dashboard() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.6 }}
-              className="grid grid-cols-2 gap-4 lg:gap-6"
+              className="grid grid-cols-1 gap-4 lg:gap-6"
             >
-              <div onClick={() => navigate('/app/planner/map')} className="relative bg-[var(--bg-card)] p-2 rounded-[32px] cursor-pointer hover:-translate-y-2 hover:shadow-[0_20px_40px_rgba(0,0,0,0.06)] transition-all duration-500 group border border-[var(--border-subtle)]">
-                <GlowingEffect spread={40} glow={true} disabled={false} proximity={64} inactiveZone={0.01} borderWidth={3} />
-                <div className="relative z-10 bg-[var(--bg-secondary)] h-full rounded-[24px] p-6 lg:p-8">
-                  <div className="w-14 h-14 rounded-[16px] bg-[var(--bg-card)] flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-500 shadow-sm border border-[var(--border-subtle)]">
-                    <Map size={24} className="text-[#384D7E]" />
-                  </div>
-                  <h4 className="font-extrabold tracking-tight text-[var(--text-primary)] text-[17px] mb-1">{t('Interactive Maps', language)}</h4>
-                  <p className="text-[12px] text-[var(--text-secondary)] font-medium mt-2">{t('Route visualization', language)}</p>
-                </div>
-              </div>
-              
               <div onClick={() => navigate('/app/explore')} className="relative bg-[var(--bg-card)] p-2 rounded-[32px] cursor-pointer hover:-translate-y-2 hover:shadow-[0_20px_40px_rgba(0,0,0,0.06)] transition-all duration-500 group border border-[var(--border-subtle)]">
                 <GlowingEffect spread={40} glow={true} disabled={false} proximity={64} inactiveZone={0.01} borderWidth={3} />
-                <div className="relative z-10 bg-[var(--bg-secondary)] h-full rounded-[24px] p-6 lg:p-8">
-                  <div className="w-14 h-14 rounded-[16px] bg-[var(--bg-card)] flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-500 shadow-sm border border-[var(--border-subtle)]">
-                    <Zap size={24} className="text-[#FC6C26]" />
+                <div className="relative z-10 bg-[var(--bg-secondary)] h-full rounded-[24px] p-6 lg:p-8 flex items-center justify-between">
+                  <div className="flex items-center gap-5">
+                    <div className="w-14 h-14 rounded-[16px] bg-[var(--bg-card)] flex items-center justify-center group-hover:scale-110 transition-transform duration-500 shadow-sm border border-[var(--border-subtle)] shrink-0">
+                      <Zap size={24} className="text-[#FC6C26]" />
+                    </div>
+                    <div>
+                      <h4 className="font-extrabold tracking-tight text-[var(--text-primary)] text-[17px] mb-1">{t('Surprise Me', language)}</h4>
+                      <p className="text-[12px] text-[var(--text-secondary)] font-medium">{t('AI generated trips', language)}</p>
+                    </div>
                   </div>
-                  <h4 className="font-extrabold tracking-tight text-[var(--text-primary)] text-[17px] mb-1">{t('Surprise Me', language)}</h4>
-                  <p className="text-[12px] text-[var(--text-secondary)] font-medium mt-2">{t('AI generated trips', language)}</p>
+                  <div className="w-10 h-10 rounded-full bg-[var(--bg-card)] border border-[var(--border-subtle)] flex items-center justify-center text-[#FC6C26] group-hover:bg-[#FC6C26] group-hover:text-white transition-colors shrink-0">
+                    <ArrowUpRight size={18} />
+                  </div>
                 </div>
               </div>
             </motion.div>

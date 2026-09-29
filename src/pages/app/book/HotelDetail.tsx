@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { Star, MapPin, Wifi, Coffee, Car, Dumbbell, ChevronLeft, Calendar, Users, ArrowRight } from 'lucide-react'
+import { Star, MapPin, Wifi, Coffee, Car, Dumbbell, ChevronLeft, ArrowRight } from 'lucide-react'
 import { HOTELS } from '../../../data/mockData'
 import DatePicker from 'react-datepicker'
 
@@ -19,14 +19,30 @@ export function HotelDetail() {
   const nights = checkIn && checkOut ? Math.max(1, Math.round((checkOut.getTime() - checkIn.getTime()) / 86400000)) : 1
   const total = hotel.pricePerNight * nights * rooms
 
-  const GALLERY = [hotel.image, ...Array(3).fill('https://images.unsplash.com/photo-1571003123894-1f0594d2b5d9?w=800&auto=format')]
+  const GALLERY = [
+    hotel.image,
+    'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=1200&q=80',
+    'https://images.unsplash.com/photo-1571003123894-1f0594d2b5d9?auto=format&fit=crop&w=1200&q=80',
+    'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=1200&q=80',
+  ]
 
   return (
     <div className="pb-24 lg:pb-8">
       {/* Gallery */}
       <div className="relative">
         <div className="h-72 sm:h-96 overflow-hidden">
-          <img src={GALLERY[selectedImg]} alt={hotel.name} className="w-full h-full object-cover" />
+          <img 
+            src={GALLERY[selectedImg]} 
+            alt={hotel.name} 
+            className="w-full h-full object-cover" 
+            onError={(e) => {
+              const target = e.currentTarget;
+              if (!target.dataset.hasFallback) {
+                target.dataset.hasFallback = 'true';
+                target.src = 'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=1200&q=80';
+              }
+            }}
+          />
         </div>
         <Link to="/app/book/hotels"
           className="absolute top-4 left-4 flex items-center gap-2 px-3 py-2 rounded-xl text-white text-sm"
@@ -38,7 +54,18 @@ export function HotelDetail() {
             <button key={i} onClick={() => setSelectedImg(i)}
               className="w-14 h-10 rounded-lg overflow-hidden border-2 transition-all"
               style={{ borderColor: selectedImg === i ? 'white' : 'transparent' }}>
-              <img src={GALLERY[i]} alt="" className="w-full h-full object-cover" />
+              <img 
+                src={GALLERY[i]} 
+                alt="" 
+                className="w-full h-full object-cover" 
+                onError={(e) => {
+                  const target = e.currentTarget;
+                  if (!target.dataset.hasFallback) {
+                    target.dataset.hasFallback = 'true';
+                    target.src = 'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=1200&q=80';
+                  }
+                }}
+              />
             </button>
           ))}
         </div>
@@ -170,8 +197,8 @@ export function HotelDetail() {
                 <motion.button
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
-                  className="w-full py-3.5 rounded-xl text-white font-bold text-sm flex items-center justify-center gap-2"
-                  style={{ background: 'linear-gradient(135deg, var(--teal-700), var(--teal-500))', boxShadow: 'var(--shadow-teal)' }}>
+                  className="w-full py-3.5 rounded-xl text-white font-bold text-sm flex items-center justify-center gap-2 cursor-pointer transition-opacity"
+                  style={{ background: 'linear-gradient(135deg, #FC6C26 0%, #ea580c 100%)', boxShadow: '0 8px 30px rgba(252, 108, 38, 0.4)' }}>
                   Book Now <ArrowRight size={14} />
                 </motion.button>
               </Link>

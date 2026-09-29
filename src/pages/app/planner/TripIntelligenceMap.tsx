@@ -675,10 +675,37 @@ export function TripIntelligenceMap() {
 
     async function resolveDestination() {
       const normalizedDest = destination.trim()
+      const destLower = normalizedDest.toLowerCase()
+
+      // Use predefined rich stops if available for major demo cities
+      if (destLower.includes('goa')) {
+        setMapConfig({ center: [15.4909, 73.8278], stops: GOA_STOPS, route: GOA_ROUTE, isResolved: true })
+        setResolvingCoords(false); return;
+      }
+      if (destLower.includes('delhi')) {
+        setMapConfig({ center: [28.6139, 77.2090], stops: DELHI_STOPS, route: DELHI_ROUTE, isResolved: true })
+        setResolvingCoords(false); return;
+      }
+      if (destLower.includes('tokyo')) {
+        setMapConfig({ center: [35.6762, 139.6503], stops: TOKYO_STOPS, route: TOKYO_ROUTE, isResolved: true })
+        setResolvingCoords(false); return;
+      }
+      if (destLower.includes('dubai')) {
+        setMapConfig({ center: [25.2048, 55.2708], stops: DUBAI_STOPS, route: DUBAI_ROUTE, isResolved: true })
+        setResolvingCoords(false); return;
+      }
+      if (destLower.includes('paris')) {
+        setMapConfig({ center: [48.8566, 2.3522], stops: PARIS_STOPS, route: PARIS_ROUTE, isResolved: true })
+        setResolvingCoords(false); return;
+      }
+      if (destLower.includes('bali')) {
+        setMapConfig({ center: [-8.4095, 115.1889], stops: BALI_STOPS, route: BALI_ROUTE, isResolved: true })
+        setResolvingCoords(false); return;
+      }
 
       // ── Step 1: Try exact + case-insensitive match in DESTINATIONS data ──────
       const matchedKey = Object.keys(DESTINATIONS).find(
-        k => k.toLowerCase() === normalizedDest.toLowerCase()
+        k => k.toLowerCase() === destLower
       )
       if (matchedKey) {
         const destInfo = DESTINATIONS[matchedKey]
@@ -704,7 +731,7 @@ export function TripIntelligenceMap() {
         // Bias search towards India first, then worldwide
         const res = await fetch(
           `https://nominatim.openstreetmap.org/search?q=${query}&format=json&limit=3&addressdetails=1`,
-          { headers: { 'Accept-Language': 'en', 'User-Agent': 'ExpeditionXAI/1.0' } }
+          { headers: { 'Accept-Language': 'en' } }
         )
         const results = await res.json()
 

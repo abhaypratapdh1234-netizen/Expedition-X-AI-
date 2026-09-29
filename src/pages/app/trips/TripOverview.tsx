@@ -8,6 +8,8 @@ import { Calendar, Users, Map, DollarSign, ArrowRight, Zap, CheckCircle2, Upload
 import { TripPrepPanel } from '../../../components/ui/TripPrepPanel'
 import { computeDecisionTimeline, computeReadinessChecklist } from '../../../services/intelligenceService'
 import type { TimelineTask, ReadinessItem } from '../../../services/intelligenceService'
+import { useThemeStore } from '../../../stores/themeStore'
+import { GlowingEffect } from '@/components/ui/glowing-effect'
 
 const TABS = ['itinerary', 'budget', 'bookings', 'documents', 'collaborators', 'prep'] as const
 const TAB_ICONS: Record<string, string> = { itinerary: '🗺️', budget: '💰', bookings: '🏨', documents: '📁', collaborators: '👥', prep: '✅' }
@@ -16,6 +18,8 @@ export function TripOverview() {
   const { id } = useParams()
   const { currentTrip: trip, fetchTripById, isLoading } = useTripStore()
   const { currency, language } = useSettingsStore()
+  const theme = useThemeStore(s => s.theme)
+  const isDark = theme === 'dark'
   const [activeTab, setActiveTab] = useState<typeof TABS[number]>('itinerary')
   const [timeline, setTimeline] = useState<TimelineTask[]>([])
   const [checklist, setChecklist] = useState<ReadinessItem[]>([])
@@ -106,24 +110,34 @@ export function TripOverview() {
             — Horizontal sliding pill dock —
         ═══════════════════════════════════════════ */}
         <div className="mb-8 overflow-x-auto scrollbar-hide">
-          <div className="inline-flex p-1.5 rounded-full gap-1"
-            style={{ background: 'var(--bg-card)', boxShadow: '0 20px 40px -12px rgba(0,0,0,0.1), inset 0 2px 5px rgba(0,0,0,0.025)', border: '1px solid rgba(0,0,0,0.04)' }}>
+          <div className="inline-flex p-1.5 rounded-full gap-1 relative"
+            style={{
+              background: 'var(--bg-card)',
+              boxShadow: '0 20px 40px -12px rgba(0,0,0,0.1), inset 0 2px 5px rgba(0,0,0,0.025)',
+              border: '1px solid var(--border-subtle)'
+            }}>
             {TABS.map(tab => {
               const isActive = activeTab === tab
               return (
                 <button key={tab} onClick={() => setActiveTab(tab)}
-                  className={`relative flex items-center gap-2 px-8 py-4 rounded-full text-[13px] font-black uppercase tracking-[0.15em] whitespace-nowrap transition-all duration-500 ${isActive ? 'text-white' : 'text-[#475569] hover:text-[#0f172a] hover:bg-slate-50'}`}
+                  className={`relative flex items-center gap-2 px-8 py-4 rounded-full text-[13px] font-black uppercase tracking-[0.15em] whitespace-nowrap transition-all duration-300 cursor-pointer group ${isActive ? 'scale-[1.02]' : 'hover:scale-[1.02]'}`}
                   style={{
-                    background: isActive ? 'linear-gradient(135deg, #FC6C26 0%, #F1A501 100%)' : 'transparent',
-                    boxShadow: isActive ? '0 10px 30px rgba(15, 23, 42,0.4), inset 0 2px 4px rgba(255, 255, 255, 0.25)' : 'none',
-                    transform: isActive ? 'scale(1.02)' : 'scale(1)',
+                    background: isActive ? '#000000' : 'transparent',
+                    color: isActive ? '#ffffff' : (isDark ? '#ffffff' : '#000000'),
+                    boxShadow: isActive
+                      ? '0 10px 25px -5px rgba(0,0,0,0.35), inset 0 1px 2px rgba(255,255,255,0.2)'
+                      : 'none',
+                    border: isActive
+                      ? (isDark ? '1px solid rgba(255,255,255,0.25)' : '1px solid #000000')
+                      : '1px solid transparent',
                   }}>
-                  {/* Shine layer on active */}
+                  {isActive && <GlowingEffect spread={40} glow={true} disabled={false} proximity={64} inactiveZone={0.01} borderWidth={2} variant="white" />}
+                  {/* Subtle top shine layer on active */}
                   {isActive && (
-                    <div className="absolute top-0 left-0 right-0 h-1/2 bg-gradient-to-b from-white/20 to-transparent rounded-t-full pointer-events-none" />
+                    <div className="absolute top-0 left-0 right-0 h-1/2 bg-gradient-to-b from-white/15 to-transparent rounded-t-full pointer-events-none" />
                   )}
-                  <span className="text-base leading-none">{TAB_ICONS[tab]}</span>
-                  <span>{t(tab.charAt(0).toUpperCase() + tab.slice(1), language)}</span>
+                  <span className="text-base leading-none relative z-10">{TAB_ICONS[tab]}</span>
+                  <span className="relative z-10 font-black">{t(tab.charAt(0).toUpperCase() + tab.slice(1), language)}</span>
                 </button>
               )
             })}

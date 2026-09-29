@@ -85,13 +85,14 @@ export const reviewService = {
         }
     },
     
-    async upvoteReview(reviewId: number) {
+    async upvoteReview(reviewId: number, isUndo: boolean = false) {
         try {
-            return await apiClient.post<void>(`/reviews/${reviewId}/upvote`, {});
+            return await apiClient.post<void>(`/reviews/${reviewId}/upvote?undo=${isUndo ? 'true' : 'false'}`, {});
         } catch (e) {
             console.error('Error upvoting, falling back to mock:', e);
             const current = getLocalReviews();
-            const updated = current.map(r => r.id === reviewId ? { ...r, upvotes: r.upvotes + 1 } : r);
+            const delta = isUndo ? -1 : 1;
+            const updated = current.map(r => r.id === reviewId ? { ...r, upvotes: Math.max(0, (r.upvotes || 0) + delta) } : r);
             saveLocalReviews(updated);
         }
     }

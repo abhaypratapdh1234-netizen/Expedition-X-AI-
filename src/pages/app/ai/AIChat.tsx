@@ -6,6 +6,7 @@ import { GlowingEffect } from '@/components/ui/glowing-effect'
 import { useIntelligenceStore } from '../../../stores/intelligenceStore'
 import { detectTripPlanningIntent } from '../../../services/intelligenceService'
 import { useNavigate } from 'react-router-dom'
+import { ChatMessageRenderer } from '../../../components/ai/ChatMessageRenderer'
 
 interface Message {
   id: string
@@ -174,19 +175,19 @@ export function AIChat() {
               {/* Bubble */}
               <div className={`flex-1 ${msg.role === 'user' ? 'flex justify-end' : 'flex justify-start'}`}>
                 <div className="flex flex-col max-w-[85%]">
-                  <div className="px-6 py-4 text-[16px] font-black leading-relaxed whitespace-pre-wrap break-words"
+                  <div className={`px-6 py-4 text-[15px] font-medium leading-relaxed ${msg.role === 'user' ? 'text-white' : ''}`}
                     style={{
                       background: msg.role === 'user'
                         ? 'linear-gradient(135deg,#0f766e,#14b8a6)'
                         : 'var(--bg-card)',
-                      color: msg.role === 'user' ? 'var(--bg-card)' : 'var(--text-primary)',
+                      color: msg.role === 'user' ? '#ffffff' : 'var(--text-primary)',
                       borderRadius: msg.role === 'user' ? '22px 4px 22px 22px' : '4px 22px 22px 22px',
                       boxShadow: msg.role === 'user'
                         ? '0 10px 30px rgba(20,184,166,0.35)'
                         : '0 6px 25px rgba(0,0,0,0.06), inset 0 2px 4px rgba(255, 255, 255, 0.8)',
                       border: msg.role === 'user' ? 'none' : '1px solid rgba(0,0,0,0.04)',
                     }}>
-                    {msg.content}
+                    <ChatMessageRenderer content={msg.content} isUser={msg.role === 'user'} />
                   </div>
 
                   {msg.role === 'assistant' && msg.id !== 'init' && (
@@ -227,6 +228,57 @@ export function AIChat() {
               </div>
             </motion.div>
           ))}
+        </AnimatePresence>
+
+        {/* Live Typing Preview — ghost bubble while user composes */}
+        <AnimatePresence>
+          {input.trim() && !typing && (
+            <motion.div
+              key="typing-preview-aichat"
+              initial={{ opacity: 0, y: 10, scale: 0.97 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.96 }}
+              transition={{ duration: 0.18 }}
+              className="flex gap-4 max-w-3xl mx-auto w-full flex-row-reverse"
+            >
+              {/* User avatar ghost */}
+              <div
+                className="w-10 h-10 rounded-2xl shrink-0 flex items-center justify-center text-white text-xs font-bold shadow-md relative overflow-hidden opacity-60"
+                style={{
+                  background: 'linear-gradient(135deg,#0f766e,#14b8a6)',
+                  boxShadow: '0 6px 18px rgba(20,184,166,0.3)'
+                }}
+              >
+                U
+                <div className="absolute top-0 left-0 right-0 h-1/2 bg-gradient-to-b from-white/25 to-transparent" />
+              </div>
+
+              {/* Ghost typing bubble */}
+              <div className="flex flex-col items-end flex-1">
+                <div
+                  className="px-6 py-3.5 text-[14px] font-semibold relative overflow-hidden"
+                  style={{
+                    background: 'rgba(20,184,166,0.1)',
+                    border: '1.5px dashed rgba(20,184,166,0.6)',
+                    borderRadius: '22px 4px 22px 22px',
+                    color: '#0f766e',
+                    backdropFilter: 'blur(8px)',
+                  }}
+                >
+                  {input}
+                  <motion.span
+                    animate={{ opacity: [1, 0, 1] }}
+                    transition={{ repeat: Infinity, duration: 0.85 }}
+                    className="inline-block ml-0.5 w-[2px] h-[15px] rounded-full align-middle"
+                    style={{ background: '#0f766e' }}
+                  />
+                </div>
+                <span className="text-[9px] mt-1 font-bold uppercase tracking-widest text-[var(--text-muted)]">
+                  composing...
+                </span>
+              </div>
+            </motion.div>
+          )}
         </AnimatePresence>
 
         {/* Typing Indicator */}

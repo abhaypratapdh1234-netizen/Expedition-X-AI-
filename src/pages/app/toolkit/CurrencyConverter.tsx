@@ -27,13 +27,13 @@ export function CurrencyConverter() {
       setIsLoading(true)
       setError(null)
       try {
-        const res = await axios.get(`http://localhost:8080/api/v1/currency/convert?from=${from}&to=${to}&amount=${numAmount}`)
+        const res = await axios.get(`https://open.er-api.com/v6/latest/${from}`)
         if (res.data && res.data.result === 'success') {
           setApiData(res.data)
         } else {
           setError('Failed to load live exchange rates.')
         }
-      } catch (err) {
+      } catch {
         setError('Currency service is currently unreachable.')
       } finally {
         setIsLoading(false)
@@ -58,7 +58,7 @@ export function CurrencyConverter() {
   }
 
   return (
-    <motion.div variants={pageTransition} initial="initial" animate="animate" exit="exit" className="p-4 sm:p-6 lg:p-8 pb-24 lg:pb-8 max-w-xl mx-auto">
+    <motion.div variants={pageTransition} initial="initial" animate="animate" exit="exit" className="p-4 sm:p-6 lg:p-8 pb-24 lg:pb-8 max-w-4xl mx-auto">
       <div className="mb-8">
         <h1 className="font-display text-6xl md:text-7xl mb-3 text-text-primary font-black tracking-tight">Currency Converter</h1>
         <p className="text-[18px] font-black text-text-muted mt-2">Live exchange rates for your global adventures.</p>
@@ -66,7 +66,8 @@ export function CurrencyConverter() {
 
       <ToolkitTabs />
 
-      <div className="p-6 sm:p-8 rounded-3xl mb-8 bg-bg-card border border-border-subtle shadow-xl relative overflow-hidden">
+      <div className="max-w-2xl mx-auto">
+        <div className="p-6 sm:p-8 rounded-3xl mb-8 bg-bg-card border border-border-subtle shadow-xl relative overflow-hidden">
         {/* Subtle background element */}
         <div className="absolute top-0 right-0 w-64 h-64 bg-teal-500/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
         
@@ -91,9 +92,9 @@ export function CurrencyConverter() {
                 <select 
                   value={from} 
                   onChange={e => setFrom(e.target.value)}
-                  className="w-full pl-12 pr-4 py-3.5 rounded-xl text-[16px] font-black bg-bg-secondary border border-border-default text-text-primary outline-none appearance-none focus:border-teal-500 transition-colors cursor-pointer"
+                  className="w-full pl-12 pr-4 py-3.5 rounded-xl text-[16px] font-black bg-bg-secondary dark:bg-[#1a1a1a] border border-border-default text-text-primary dark:text-white outline-none appearance-none focus:border-teal-500 transition-colors cursor-pointer"
                 >
-                  {CURRENCIES.map(c => <option key={c} value={c}>{c}</option>)}
+                  {CURRENCIES.map(c => <option key={c} value={c} className="dark:bg-[#1a1a1a] dark:text-white">{c}</option>)}
                 </select>
                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xl">{FLAGS[from]}</span>
               </div>
@@ -113,9 +114,9 @@ export function CurrencyConverter() {
                 <select 
                   value={to} 
                   onChange={e => setTo(e.target.value)}
-                  className="w-full pl-12 pr-4 py-3.5 rounded-xl text-[16px] font-black bg-bg-secondary border border-border-default text-text-primary outline-none appearance-none focus:border-teal-500 transition-colors cursor-pointer"
+                  className="w-full pl-12 pr-4 py-3.5 rounded-xl text-[16px] font-black bg-bg-secondary dark:bg-[#1a1a1a] border border-border-default text-text-primary dark:text-white outline-none appearance-none focus:border-teal-500 transition-colors cursor-pointer"
                 >
-                  {CURRENCIES.map(c => <option key={c} value={c}>{c}</option>)}
+                  {CURRENCIES.map(c => <option key={c} value={c} className="dark:bg-[#1a1a1a] dark:text-white">{c}</option>)}
                 </select>
                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xl">{FLAGS[to]}</span>
               </div>
@@ -192,6 +193,7 @@ export function CurrencyConverter() {
           </motion.div>
         </>
       )}
+      </div>
     </motion.div>
   )
 }

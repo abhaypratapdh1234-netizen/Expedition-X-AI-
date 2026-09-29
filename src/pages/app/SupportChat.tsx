@@ -2,9 +2,9 @@ import { useState, useRef, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Send, ArrowLeft, Bot, CheckCheck } from 'lucide-react'
 import { Link } from 'react-router-dom'
-import { pageTransition, itemPop } from '../../motion/variants'
-import { apiClient } from '../../services/apiClient'
+import { pageTransition } from '../../motion/variants'
 import { aiService } from '../../services/aiService'
+import { ChatMessageRenderer } from '../../components/ai/ChatMessageRenderer'
 
 interface Message {
   id: string
@@ -31,9 +31,10 @@ export function SupportChat() {
   const handleSend = async () => {
     if (!input.trim()) return
 
+    const userText = input
     const newMsg: Message = {
       id: Date.now().toString(),
-      text: input,
+      text: userText,
       sender: 'user',
       time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       status: 'sent'
@@ -43,49 +44,39 @@ export function SupportChat() {
     setInput('')
     setIsTyping(true)
 
-    // Simulate small network delay for realistic UI feel
+    // Mark as delivered after 400ms
     setTimeout(() => {
       setMessages(prev => prev.map(m => m.id === newMsg.id ? { ...m, status: 'delivered' } : m))
-    }, 500)
+    }, 400)
 
     try {
-      const response = await apiClient.post<{reply: string}>('/chatbot/query', { message: newMsg.text })
+      // Small realistic typing delay (600–1200ms), then instant response
+      const delay = 600 + Math.random() * 600
+      await new Promise(resolve => setTimeout(resolve, delay))
+
+      const result = await aiService.processChatQuery(userText)
+      const replyText = result.response || "I'm here to help! Could you tell me more about what you need? 😊"
+
       setMessages(prev => prev.map(m => m.id === newMsg.id ? { ...m, status: 'read' } : m))
-      
       setMessages(prev => [
-        ...prev, 
-        { 
-          id: (Date.now() + 1).toString(), 
-          text: response.reply, 
-          sender: 'agent', 
-          time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) 
+        ...prev,
+        {
+          id: (Date.now() + 1).toString(),
+          text: replyText,
+          sender: 'agent',
+          time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
         }
       ])
-    } catch (err) {
-      console.error('Chatbot error:', err)
-      try {
-        const fallbackResponse = await aiService.processChatQuery(newMsg.text);
-        setMessages(prev => prev.map(m => m.id === newMsg.id ? { ...m, status: 'read' } : m))
-        setMessages(prev => [
-          ...prev, 
-          { 
-            id: (Date.now() + 1).toString(), 
-            text: fallbackResponse.response, 
-            sender: 'agent', 
-            time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) 
-          }
-        ])
-      } catch (fallbackErr) {
-        setMessages(prev => [
-          ...prev, 
-          { 
-            id: (Date.now() + 1).toString(), 
-            text: "I'm having trouble connecting to the server right now. Please try again later.", 
-            sender: 'agent', 
-            time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) 
-          }
-        ])
-      }
+    } catch {
+      setMessages(prev => [
+        ...prev,
+        {
+          id: (Date.now() + 1).toString(),
+          text: "Happy to help! 😊 Ask me about destinations, trip planning, budgets, hotels, tickets, or local food!",
+          sender: 'agent',
+          time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        }
+      ])
     } finally {
       setIsTyping(false)
     }
@@ -134,7 +125,7 @@ export function SupportChat() {
                   ? 'bg-teal-600 text-white rounded-tr-sm border border-teal-500' 
                   : 'bg-bg-card text-text-primary rounded-tl-sm border border-border-subtle'
               }`}>
-                {msg.text}
+                <ChatMessageRenderer content={msg.text} isUser={msg.sender === 'user'} />
               </div>
               <div className="flex items-center gap-1.5 mt-1.5 px-1">
                 <span className="text-[10px] font-medium text-text-muted">{msg.time}</span>

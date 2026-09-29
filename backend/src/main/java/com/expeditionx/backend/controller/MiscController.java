@@ -61,8 +61,8 @@ public class MiscController {
     }
 
     @PostMapping("/reviews/{id}/upvote")
-    public ResponseEntity<Void> upvoteReview(@PathVariable Long id) {
-        reviewService.upvote(id);
+    public ResponseEntity<Void> upvoteReview(@PathVariable Long id, @RequestParam(required = false, defaultValue = "false") boolean undo) {
+        reviewService.upvote(id, undo);
         return ResponseEntity.ok().build();
     }
 

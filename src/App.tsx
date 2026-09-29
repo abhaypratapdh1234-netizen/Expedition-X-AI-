@@ -60,6 +60,8 @@ const MemoryWeightPage = lazy(() => import('./pages/app/planner/MemoryWeightPage
 const TripIntelligenceMap = lazy(() => import('./pages/app/planner/TripIntelligenceMap').then(module => ({ default: module.TripIntelligenceMap })))
 const HotelListing = lazy(() => import('./pages/app/book/HotelListing').then(module => ({ default: module.HotelListing })))
 const HotelDetail = lazy(() => import('./pages/app/book/HotelDetail').then(module => ({ default: module.HotelDetail })))
+const FlightSearch = lazy(() => import('./pages/app/book/FlightSearch').then(module => ({ default: module.FlightSearch })))
+const FlightDetails = lazy(() => import('./pages/app/book/FlightDetails').then(module => ({ default: module.FlightDetails })))
 const TicketBooking = lazy(() => import('./pages/app/book/TicketBooking').then(module => ({ default: module.TicketBooking })))
 const CheckoutPage = lazy(() => import('./pages/app/book/CheckoutPage').then(module => ({ default: module.CheckoutPage })))
 const BookingConfirmation = lazy(() => import('./pages/app/book/BookingConfirmation').then(module => ({ default: module.BookingConfirmation })))
@@ -156,6 +158,8 @@ export default function App() {
             <Route path="planner/intelligence" element={<TripIntelligenceMap />} />
 
             {/* Book */}
+            <Route path="flights" element={<FlightSearch />} />
+            <Route path="flights/detail" element={<FlightDetails />} />
             <Route path="book/hotels" element={<HotelListing />} />
             <Route path="book/hotels/:id" element={<HotelDetail />} />
             <Route path="book/tickets" element={<TicketBooking />} />

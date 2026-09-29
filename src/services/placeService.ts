@@ -1,6 +1,7 @@
 export interface SearchFilters {
   query?: string
   category?: string
+  country?: string
   minRating?: number
 }
 
@@ -59,7 +60,7 @@ export interface PlaceDetailResponse extends PlaceResponse {
 }
 
 import { apiClient } from './apiClient'
-import { DESTINATIONS } from '../data/mockData'
+import { DESTINATIONS, TOURIST_PLACES } from '../data/mockData'
 
 async function fetchImageFromUnsplash(query: string): Promise<string> {
   try {
@@ -74,7 +75,7 @@ async function fetchImageFromUnsplash(query: string): Promise<string> {
   return 'https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?w=800&auto=format';
 }
 
-async function fetchFromWikipedia(query: string): Promise<PlaceResponse[]> {
+async function fetchFromWikipedia(query: string, requestedCountry?: string): Promise<PlaceResponse[]> {
   try {
     const wikiUrl = `https://en.wikipedia.org/w/api.php?action=query&format=json&origin=*&prop=pageimages|extracts|coordinates&generator=search&gsrsearch=${encodeURIComponent(query)}&gsrlimit=5&pithumbsize=800&exintro=1&explaintext=1`
     const response = await fetch(wikiUrl)
@@ -87,7 +88,7 @@ async function fetchFromWikipedia(query: string): Promise<PlaceResponse[]> {
       id: page.pageid || (9000 + index),
       name: page.title,
       city: page.title,
-      country: 'India',
+      country: requestedCountry === 'foreign' ? 'International' : (requestedCountry || 'India'),
       state: 'Explore',
       category: 'Adventure', 
       description: page.extract ? page.extract.substring(0, 120) + '...' : 'A beautiful and breathtaking destination to explore.',
@@ -146,6 +147,104 @@ async function fetchDestinationByIdFromWikipedia(id: string): Promise<PlaceDetai
   }
 }
 
+export const VERIFIED_LANDMARKS_DATA: Record<string, { image: string; avgCost?: number }> = {
+  'red fort': {
+    image: 'https://images.unsplash.com/photo-1705524220939-dac17cf94236?w=800',
+    avgCost: 50,
+  },
+  'qutub minar': {
+    image: 'https://images.unsplash.com/photo-1632426237957-5ea14aae7100?w=800',
+    avgCost: 35,
+  },
+  'india gate': {
+    image: 'https://images.unsplash.com/photo-1587474260584-136574528ed5?w=800',
+    avgCost: 0,
+  },
+  'taj mahal': {
+    image: 'https://images.unsplash.com/photo-1524492412937-b28074a5d7da?w=800',
+    avgCost: 250,
+  },
+  'amber fort': {
+    image: 'https://images.unsplash.com/photo-1599661046289-e31897846e41?w=800',
+    avgCost: 200,
+  },
+  'hawa mahal': {
+    image: 'https://images.unsplash.com/photo-1477587458883-47145ed94245?w=800',
+    avgCost: 50,
+  },
+  'baga beach': {
+    image: 'https://images.unsplash.com/photo-1512343879784-a960bf40e7f2?w=800',
+    avgCost: 500,
+  },
+  'dudhsagar falls': {
+    image: 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=800',
+    avgCost: 800,
+  },
+  'solang valley': {
+    image: 'https://images.unsplash.com/photo-1626621341517-bbf3d9990a23?w=800',
+    avgCost: 1500,
+  },
+  'old manali': {
+    image: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=800',
+    avgCost: 200,
+  },
+  'alleppey backwaters': {
+    image: 'https://images.unsplash.com/photo-1602216056096-3b40cc0c9944?w=800',
+    avgCost: 3000,
+  },
+  'munnar tea gardens': {
+    image: 'https://images.unsplash.com/photo-1580818135730-ebd11086660b?w=800',
+    avgCost: 500,
+  },
+  'gateway of india': {
+    image: 'https://images.unsplash.com/photo-1529253355930-ddbe423a2ac7?w=800',
+    avgCost: 0,
+  },
+  'marine drive': {
+    image: 'https://images.unsplash.com/photo-1570168007204-dfb528c6958f?w=800',
+    avgCost: 0,
+  },
+  'varanasi ghats': {
+    image: 'https://images.unsplash.com/photo-1561361513-2d000a50f0dc?w=800',
+    avgCost: 100,
+  },
+  'victoria memorial': {
+    image: 'https://images.unsplash.com/photo-1600080077823-a44592513861?w=800',
+    avgCost: 30,
+  },
+  'udaipur city palace': {
+    image: 'https://images.unsplash.com/photo-1615836245337-f5b9b2303f10?w=800',
+    avgCost: 300,
+  },
+  'hampi ruins': {
+    image: 'https://images.unsplash.com/photo-1590050752117-238cb0fb12b1?w=800',
+    avgCost: 100,
+  },
+  'leh palace': {
+    image: 'https://images.unsplash.com/photo-1545389336-cf090694435e?w=800',
+    avgCost: 200,
+  },
+  'darjeeling tea estate': {
+    image: 'https://images.unsplash.com/photo-1544085311-11a028465b03?w=800',
+    avgCost: 400,
+  },
+}
+
+export function sanitizePlaceResponse<T extends { name?: string; imageUrl?: string; avgCost?: number }>(place: T): T {
+  if (!place || !place.name) return place
+  const nameKey = place.name.toLowerCase().trim()
+  const matched = Object.entries(VERIFIED_LANDMARKS_DATA).find(([k]) => nameKey.includes(k) || k.includes(nameKey))
+  if (matched) {
+    const [, info] = matched
+    return {
+      ...place,
+      imageUrl: info.image,
+      avgCost: info.avgCost !== undefined ? info.avgCost : place.avgCost,
+    }
+  }
+  return place
+}
+
 export const placeService = {
   async searchDestinations(filters: SearchFilters = {}): Promise<PlaceResponse[]> {
     const params = new URLSearchParams()
@@ -155,55 +254,120 @@ export const placeService = {
     let results: PlaceResponse[] = []
     
     try {
-      results = await apiClient.get<PlaceResponse[]>(`/places/search?${params.toString()}`)
+      if (filters.category === 'Trending') {
+        results = await apiClient.get<PlaceResponse[]>('/places/trending')
+      } else {
+        results = await apiClient.get<PlaceResponse[]>(`/places/search?${params.toString()}`)
+      }
     } catch (error) {
       console.error('Error fetching destinations, falling back to mock:', error)
-      let mockResults = [...DESTINATIONS] as unknown as PlaceResponse[]
+      let mockResults = [...DESTINATIONS, ...TOURIST_PLACES] as unknown as PlaceResponse[]
       
       // Simple local search if query exists
       if (filters.query) {
         const q = filters.query.toLowerCase()
         mockResults = mockResults.filter(d => 
           d.name.toLowerCase().includes(q) || 
-          d.city.toLowerCase().includes(q) || 
-          d.state.toLowerCase().includes(q)
+          (d.city && d.city.toLowerCase().includes(q)) || 
+          (d.state && d.state.toLowerCase().includes(q))
         )
       }
+      
+      if (filters.category) {
+        if (filters.category === 'Trending') {
+          // Fallback to top 10 mock destinations for trending
+          mockResults = mockResults.slice(0, 10)
+        } else {
+          mockResults = mockResults.filter(d => d.category?.toLowerCase().includes(filters.category!.toLowerCase()))
+        }
+      }
+      
       results = mockResults
     }
 
     // Wikipedia Fallback Magic
     if (results.length === 0 && filters.query) {
-      results = await fetchFromWikipedia(filters.query)
+      results = await fetchFromWikipedia(filters.query, filters.country)
+    }
+
+    if (filters.country) {
+      const c = filters.country.toLowerCase()
+      if (c === 'foreign') {
+        results = results.filter(d => d.country && d.country.toLowerCase() !== 'india')
+      } else {
+        results = results.filter(d => d.country && d.country.toLowerCase() === c)
+      }
     }
 
     if (filters.minRating) {
       results = results.filter(d => d.rating >= filters.minRating!)
     }
     
-    return results
+    return results.map(sanitizePlaceResponse)
   },
 
   async getDestinationById(id: string): Promise<PlaceDetailResponse | null> {
     try {
-      return await apiClient.get<PlaceDetailResponse>(`/places/${id}`)
+      const res = await apiClient.get<PlaceDetailResponse>(`/places/${id}`)
+      return sanitizePlaceResponse(res)
     } catch (error) {
       console.error('Error fetching destination details:', error)
       
-      const wikiDest = await fetchDestinationByIdFromWikipedia(id)
-      if (wikiDest) return wikiDest
-      
+      const touristPlace = TOURIST_PLACES.find(p => String(p.id) === id)
+      if (touristPlace) {
+        let enhancedDescription = touristPlace.description;
+        try {
+          const wikiRes = await fetch(`https://en.wikipedia.org/w/api.php?action=query&format=json&origin=*&prop=extracts&exintro=1&explaintext=1&titles=${encodeURIComponent(touristPlace.name)}`)
+          const wikiData = await wikiRes.json()
+          const pages = wikiData.query?.pages
+          if (pages) {
+            const pageId = Object.keys(pages)[0]
+            if (pageId && pageId !== '-1' && pages[pageId].extract) {
+              enhancedDescription = pages[pageId].extract
+            }
+          }
+        } catch(e) {}
+        
+        return sanitizePlaceResponse({
+          ...touristPlace,
+          description: enhancedDescription,
+          avgCost: touristPlace.entryFee || 100,
+          weather: { temperature: 28, description: 'Clear Sky', icon: '☀️', humidity: 45, windSpeed: 8 },
+          nearbyHotels: [],
+          recentReviews: [],
+          sentimentPercentage: 92,
+          touristPlaces: []
+        } as unknown as PlaceDetailResponse)
+      }
+
       const mockDest = DESTINATIONS.find(d => String(d.id) === id)
       if (mockDest) {
-        return {
+        let enhancedDescription = mockDest.description;
+        try {
+          const wikiRes = await fetch(`https://en.wikipedia.org/w/api.php?action=query&format=json&origin=*&prop=extracts&exintro=1&explaintext=1&titles=${encodeURIComponent(mockDest.name)}`)
+          const wikiData = await wikiRes.json()
+          const pages = wikiData.query?.pages
+          if (pages) {
+            const pageId = Object.keys(pages)[0]
+            if (pageId && pageId !== '-1' && pages[pageId].extract) {
+              enhancedDescription = pages[pageId].extract
+            }
+          }
+        } catch(e) {}
+
+        return sanitizePlaceResponse({
           ...mockDest,
+          description: enhancedDescription,
           weather: { temperature: 25, description: 'Sunny', icon: '☀️', humidity: 60, windSpeed: 12 },
           nearbyHotels: [],
           recentReviews: [],
           sentimentPercentage: 85,
           touristPlaces: []
-        } as unknown as PlaceDetailResponse
+        } as unknown as PlaceDetailResponse)
       }
+      
+      const wikiDest = await fetchDestinationByIdFromWikipedia(id)
+      if (wikiDest) return sanitizePlaceResponse(wikiDest)
       
       return null
     }
@@ -211,7 +375,8 @@ export const placeService = {
 
   async getTrendingDestinations(): Promise<PlaceResponse[]> {
     try {
-      return await apiClient.get<PlaceResponse[]>('/places/trending')
+      const list = await apiClient.get<PlaceResponse[]>('/places/trending')
+      return (list || []).map(sanitizePlaceResponse)
     } catch (error) {
       console.error('Error fetching trending destinations:', error)
       return []

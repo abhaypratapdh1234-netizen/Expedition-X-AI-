@@ -29,7 +29,10 @@ public class ReviewService {
     @Transactional
     public ReviewResponse createReview(Long userId, CreateReviewRequest req) {
         User user = userRepo.findById(userId).orElseThrow(() -> new ResourceNotFoundException("User", "id", userId));
-        Place place = placeRepo.findById(req.placeId()).orElseThrow(() -> new ResourceNotFoundException("Place", "id", req.placeId()));
+        Place place = null;
+        if (req.placeId() != null && req.placeId() != 999999999L) {
+            place = placeRepo.findById(req.placeId()).orElseThrow(() -> new ResourceNotFoundException("Place", "id", req.placeId()));
+        }
 
         // Run sentiment analysis
         var sentiment = sentimentAnalyzer.analyze(req.comment());
@@ -45,8 +48,10 @@ public class ReviewService {
         review = reviewRepo.save(review);
 
         // Update place review count and avg rating
-        place.setReviewCount(place.getReviewCount() + 1);
-        placeRepo.save(place);
+        if (place != null) {
+            place.setReviewCount(place.getReviewCount() + 1);
+            placeRepo.save(place);
+        }
 
         return toResponse(review);
     }
@@ -66,15 +71,26 @@ public class ReviewService {
 
     @Transactional
     public void upvote(Long reviewId) {
+        upvote(reviewId, false);
+    }
+
+    @Transactional
+    public void upvote(Long reviewId, boolean undo) {
         Review r = reviewRepo.findById(reviewId).orElseThrow(() -> new ResourceNotFoundException("Review", "id", reviewId));
-        r.setUpvotes(r.getUpvotes() + 1);
+        int current = r.getUpvotes() != null ? r.getUpvotes() : 0;
+        if (undo) {
+            r.setUpvotes(Math.max(0, current - 1));
+        } else {
+            r.setUpvotes(current + 1);
+        }
         reviewRepo.save(r);
     }
 
     private ReviewResponse toResponse(Review r) {
         List<String> photos = r.getPhotos() != null ? Arrays.asList(r.getPhotos().split(",")) : List.of();
+        String placeName = r.getPlace() != null ? r.getPlace().getName() : "Expedition X AI Platform";
         return new ReviewResponse(r.getId(), r.getUser().getName(), r.getUser().getAvatarUrl(),
-                r.getPlace().getId(), r.getRating(), r.getComment(),
+                placeName, r.getRating(), r.getComment(),
                 r.getSentimentScore(), r.getSentimentLabel(), photos,
                 r.getUpvotes(), r.getCreatedAt().toString());
     }

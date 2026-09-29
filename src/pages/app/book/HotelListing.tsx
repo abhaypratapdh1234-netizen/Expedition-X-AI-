@@ -1,23 +1,47 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Star, MapPin, Grid, List, Heart, Wifi, Coffee, Car, Waves, Dumbbell, Sparkles, Utensils, ConciergeBell } from 'lucide-react'
+import { Star, MapPin, Grid, List, Heart, Wifi, Coffee, Car, Waves, Dumbbell, Sparkles, Utensils, ConciergeBell, Search } from 'lucide-react'
 import { useBookingStore } from '../../../stores/bookingStore'
 import { useWishlistStore } from '../../../stores/wishlistStore'
+import { useTripStore } from '../../../stores/tripStore'
 import { staggerContainer, itemPop, pageTransition } from '../../../motion/variants'
 
 export function HotelListing() {
   const { hotels, isSearching: isLoading, searchHotels } = useBookingStore()
   const { savedPlaceIds, fetchWishlist, toggleSaved } = useWishlistStore()
+  const { fetchUserTrips } = useTripStore()
 
   const [view, setView] = useState<'grid' | 'list'>('grid')
   const [priceRange, setPriceRange] = useState(20000)
   const [selectedAmenities, setSelectedAmenities] = useState<string[]>([])
   
+  const [locationQuery, setLocationQuery] = useState('')
+  const hasInitialized = useRef(false)
+
   useEffect(() => {
-    searchHotels({ location: 'Delhi', maxPrice: 50000 })
-    fetchWishlist()
-  }, [searchHotels, fetchWishlist])
+    if (!hasInitialized.current) {
+      hasInitialized.current = true
+      const init = async () => {
+        await fetchUserTrips()
+        const currentTrips = useTripStore.getState().trips
+        const defaultLoc = (currentTrips && currentTrips.length > 0 && currentTrips[0].destinations && currentTrips[0].destinations.length > 0) 
+          ? currentTrips[0].destinations[0] 
+          : 'Delhi'
+        setLocationQuery(defaultLoc)
+        searchHotels({ location: defaultLoc, maxPrice: 50000 })
+      }
+      init()
+      fetchWishlist()
+    }
+  }, [fetchWishlist, fetchUserTrips, searchHotels])
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (locationQuery.trim()) {
+      searchHotels({ location: locationQuery.trim(), maxPrice: 50000 })
+    }
+  }
 
   const filtered = hotels.filter(h => {
     const withinPrice = h.pricePerNight <= priceRange
@@ -58,6 +82,20 @@ export function HotelListing() {
       {/* Floating Dynamic Island Filter Modules */}
       <div className="flex flex-wrap justify-center gap-4 mb-12 relative z-10">
         
+        {/* Module 0: Location Search */}
+        <form onSubmit={handleSearch} className="flex items-center gap-3 p-2 pl-5 pr-2 rounded-full bg-[var(--bg-card)]/70 backdrop-blur-2xl shadow-sm border border-[var(--border-subtle)] focus-within:border-[var(--text-primary)] transition-all">
+          <Search size={18} className="text-[var(--text-muted)]" />
+          <input 
+            type="text" 
+            placeholder="Search destination..." 
+            value={locationQuery}
+            onChange={e => setLocationQuery(e.target.value)}
+            className="bg-transparent border-none outline-none text-[16px] font-bold text-[var(--text-primary)] placeholder-[var(--text-muted)] w-32 md:w-40 antialiased"
+          />
+          <button type="submit" className="bg-[var(--text-primary)] text-[var(--bg-card)] px-5 py-2.5 rounded-full text-[15px] font-bold antialiased shadow-sm hover:opacity-90">
+            Search
+          </button>
+        </form>
         {/* Module 1: Price */}
         <div className="flex items-center gap-4 p-2 pl-5 pr-2 rounded-full bg-[var(--bg-card)]/70 backdrop-blur-2xl shadow-sm border border-[var(--border-subtle)] transition-all hover:bg-[var(--bg-card)]/90">
           <span className="text-[16px] font-bold tracking-widest uppercase text-[var(--text-secondary)] antialiased">Max Price</span>
@@ -140,7 +178,19 @@ export function HotelListing() {
                          style={{ boxShadow: '0 25px 50px -12px rgba(0,0,0,0.2)' }}>
                       
                       {/* Full Bleed Image */}
-                      <img src={hotel.image} alt={hotel.name} className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-[1.5s] ease-out" loading="lazy" />
+                      <img 
+                        src={hotel.image} 
+                        alt={hotel.name} 
+                        className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-[1.5s] ease-out" 
+                        loading="lazy" 
+                        onError={(e) => {
+                          const target = e.currentTarget;
+                          if (!target.dataset.hasFallback) {
+                            target.dataset.hasFallback = 'true';
+                            target.src = 'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=1200&q=80';
+                          }
+                        }}
+                      />
                       
                       {/* Dramatic Overlays for PERFECT Contrast */}
                       <div className="absolute inset-0 bg-gradient-to-t from-black via-black/60 to-transparent opacity-90 group-hover:opacity-100 transition-opacity duration-700" />
@@ -201,7 +251,18 @@ export function HotelListing() {
                       <div className="absolute inset-0 bg-gradient-to-r from-transparent to-teal-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
                       
                       <div className="relative w-full md:w-64 h-48 md:h-full rounded-[24px] overflow-hidden shrink-0 shadow-lg">
-                        <img src={hotel.image} alt={hotel.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000" />
+                        <img 
+                          src={hotel.image} 
+                          alt={hotel.name} 
+                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000" 
+                          onError={(e) => {
+                            const target = e.currentTarget;
+                            if (!target.dataset.hasFallback) {
+                              target.dataset.hasFallback = 'true';
+                              target.src = 'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=1200&q=80';
+                            }
+                          }}
+                        />
                         <div className="absolute inset-0 bg-gradient-to-r from-black/40 to-transparent opacity-60" />
                         <motion.button 
                           whileHover={{ scale: 1.1, backgroundColor: 'rgba(255,255,255,0.95)' }}
@@ -230,7 +291,7 @@ export function HotelListing() {
                           
                           <div className="text-right flex flex-col items-end">
                             <div className="text-[14px] text-[var(--text-secondary)] uppercase tracking-widest font-black mb-1">Per Night</div>
-                            <div className="text-5xl font-black text-teal-800 tracking-tight drop-shadow-sm bg-clip-text">₹{hotel.pricePerNight.toLocaleString()}</div>
+                            <div className="text-5xl font-black text-[var(--text-primary)] tracking-tight drop-shadow-sm">₹{hotel.pricePerNight.toLocaleString()}</div>
                           </div>
                         </div>
                         

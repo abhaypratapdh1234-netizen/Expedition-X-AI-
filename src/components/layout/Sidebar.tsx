@@ -1,7 +1,7 @@
 import { NavLink, Link, useNavigate } from 'react-router-dom'
 import { GlowingEffect } from '@/components/ui/glowing-effect'
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
-import { Compass, LayoutDashboard, Map, BookOpen, Briefcase, Heart, MessageSquare,
+import { Compass, LayoutDashboard, Map, BookOpen, Briefcase, Heart, MessageSquare, Plane,
   Star, Bell, User, HelpCircle, Settings, ChevronLeft, ChevronRight,
   Wrench, ShieldCheck, LogOut, X, ShieldAlert, VolumeX } from 'lucide-react'
 import { useState } from 'react'
@@ -14,10 +14,7 @@ import { springSnappy, springSoft, easeReveal, durations } from '../../motion/to
 const NAV_ITEMS = [
   { icon: LayoutDashboard, label: 'Dashboard', to: '/app/dashboard' },
   { icon: Briefcase, label: 'My Trips', to: '/app/trips' },
-  { icon: ShieldAlert, label: 'Dead-Zone Navigator', to: '/app/dead-zone' },
-  { icon: Compass, label: 'Future Crowd Map', to: '/app/crowd-map' },
-  { icon: VolumeX, label: 'Quiet Tourism', to: '/app/quiet-tourism' },
-  { icon: Heart, label: 'Memory Weight', to: '/app/memory-weight' },
+  { icon: Plane, label: 'Flight Search', to: '/app/flights' },
   { icon: BookOpen, label: 'My Bookings', to: '/app/bookings' },
   { icon: Heart, label: 'Wishlist', to: '/app/wishlist' },
   { icon: MessageSquare, label: 'AI Assistant', to: '/app/assistant' },

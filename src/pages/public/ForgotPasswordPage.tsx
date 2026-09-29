@@ -16,17 +16,17 @@ export function ForgotPasswordPage() {
     e.preventDefault()
     setLoading(true)
     try {
-      const res = await fetch('/api/v1/auth/forgot-password', {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email })
-      });
+      if (!email.includes('@')) {
+        alert("Please enter a valid email address.")
+        setLoading(false)
+        return
+      }
       
-      if (res.ok) {
+      const response = await axios.post('http://localhost:5000/api/auth/forgot-password', { email })
+      if (response.data.success) {
         setStep('otp')
       } else {
-        const data = await res.json().catch(() => ({}));
-        alert(data.message || "Failed to send OTP")
+        alert(response.data.error || "Failed to send OTP email.")
       }
     } catch (err) {
       console.error(err)
@@ -112,17 +112,17 @@ export function ForgotPasswordPage() {
                     setLoading(true)
                     const otpBoxes = Array.from(document.querySelectorAll('.otp-input-box')) as HTMLInputElement[]
                     const otpCode = otpBoxes.map(b => b.value).join('')
-                    const res = await fetch('/api/v1/auth/verify-otp', {
-                      method: "POST",
-                      headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({ email, otp: otpCode })
-                    });
                     
-                    if (res.ok) {
+                    if (otpCode.length !== 6) {
+                      alert("Please enter a full 6-digit OTP.")
+                      return
+                    }
+
+                    const response = await axios.post('http://localhost:5000/api/auth/verify-otp', { email, otp: otpCode })
+                    if (response.data.success) {
                       setStep('reset')
                     } else {
-                      const data = await res.json().catch(() => ({}));
-                      alert(data.message || "Invalid OTP! Try again.")
+                      alert(response.data.error || "Invalid OTP.")
                     }
                   } catch(e) {
                     alert("Network error! Try again.")
@@ -161,19 +161,12 @@ export function ForgotPasswordPage() {
                      setLoading(true)
                      const newPassword = (document.getElementById('new-password') as HTMLInputElement).value
                      
-                     const res = await fetch('/api/v1/auth/reset-password', {
-                       method: "POST",
-                       headers: { "Content-Type": "application/json" },
-                       body: JSON.stringify({ token: email, newPassword })
-                     });
-                     
-                     if (res.ok) {
-                       // Enforce the new password across the app for a lifetime fix
+                     const response = await axios.post('http://localhost:5000/api/auth/reset-password', { email, newPassword })
+                     if (response.data.success) {
                        localStorage.setItem(`expedition_pass_${email}`, newPassword)
                        setStep('done')
                      } else {
-                       const data = await res.json().catch(() => ({}));
-                       alert(data.message || "Failed to reset password.")
+                       alert(response.data.error || "Failed to reset password.")
                      }
                   } catch (err) {
                      alert("Failed to reset password.")

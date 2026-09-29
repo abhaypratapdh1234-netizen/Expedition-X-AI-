@@ -3,7 +3,7 @@
 
 export const DESTINATIONS = [
   {
-    id: '1',
+    id: 'd1',
     name: 'Paris',
     country: 'France',
     state: 'Île-de-France',
@@ -19,7 +19,7 @@ export const DESTINATIONS = [
     trending: true,
   },
   {
-    id: '2',
+    id: 'd2',
     name: 'Hallstatt',
     country: 'Austria',
     state: 'Upper Austria',
@@ -35,7 +35,7 @@ export const DESTINATIONS = [
     trending: true,
   },
   {
-    id: '3',
+    id: 'd3',
     name: 'Kyoto',
     country: 'Japan',
     state: 'Kyoto',
@@ -51,7 +51,7 @@ export const DESTINATIONS = [
     trending: false,
   },
   {
-    id: '4',
+    id: 'd4',
     name: 'Santorini',
     country: 'Greece',
     state: 'South Aegean',
@@ -67,7 +67,7 @@ export const DESTINATIONS = [
     trending: true,
   },
   {
-    id: '5',
+    id: 'd5',
     name: 'Shirakawa-go',
     country: 'Japan',
     state: 'Gifu',
@@ -83,7 +83,7 @@ export const DESTINATIONS = [
     trending: false,
   },
   {
-    id: '6',
+    id: 'd6',
     name: 'New York City',
     country: 'USA',
     state: 'New York',
@@ -99,7 +99,7 @@ export const DESTINATIONS = [
     trending: true,
   },
   {
-    id: '7',
+    id: 'd7',
     name: 'Giethoorn',
     country: 'Netherlands',
     state: 'Overijssel',
@@ -115,7 +115,7 @@ export const DESTINATIONS = [
     trending: true,
   },
   {
-    id: '8',
+    id: 'd8',
     name: 'Cape Town',
     country: 'South Africa',
     state: 'Western Cape',
@@ -131,7 +131,7 @@ export const DESTINATIONS = [
     trending: false,
   },
   {
-    id: '9',
+    id: 'd9',
     name: 'Colmar',
     country: 'France',
     state: 'Grand Est',
@@ -147,7 +147,7 @@ export const DESTINATIONS = [
     trending: true,
   },
   {
-    id: '10',
+    id: 'd10',
     name: 'Dubai',
     country: 'UAE',
     state: 'Dubai',
@@ -205,7 +205,7 @@ export const TOURIST_PLACES = [
     id: 'p1',
     name: 'Red Fort',
     city: 'Delhi',
-    image: 'https://images.unsplash.com/photo-1564507592333-c60657eea523?w=800&auto=format',
+    image: 'https://images.unsplash.com/photo-1705524220939-dac17cf94236?w=800',
     rating: 4.6,
     reviews: 45000,
     category: 'Historical',
@@ -219,11 +219,11 @@ export const TOURIST_PLACES = [
     id: 'p2',
     name: 'Qutub Minar',
     city: 'Delhi',
-    image: 'https://images.unsplash.com/photo-1587474260584-136574528ed5?w=800&auto=format',
+    image: 'https://images.unsplash.com/photo-1632426237957-5ea14aae7100?w=800',
     rating: 4.7,
     reviews: 38000,
     category: 'Historical',
-    entryFee: 40,
+    entryFee: 35,
     bestTime: '7 AM – 5 PM',
     description: 'The tallest brick minaret in the world, built in 1193.',
     lat: 28.5244,
@@ -233,7 +233,7 @@ export const TOURIST_PLACES = [
     id: 'p3',
     name: 'India Gate',
     city: 'Delhi',
-    image: 'https://images.unsplash.com/photo-1519750157634-b6d493a0f77c?w=800&auto=format',
+    image: 'https://images.unsplash.com/photo-1587474260584-136574528ed5?w=800',
     rating: 4.5,
     reviews: 56000,
     category: 'Historical',
@@ -246,6 +246,7 @@ export const TOURIST_PLACES = [
 ]
 
 export const THEMES = [
+  { id: 'trending', label: 'Trending', emoji: '🔥', color: '#FC6C26', destinations: 150 },
   { id: 'adventure', label: 'Adventure', emoji: '🏔️', color: '#0f6b5c', destinations: 145 },
   { id: 'heritage', label: 'Heritage', emoji: '🏛️', color: '#6c5b7b', destinations: 230 },
   { id: 'beach', label: 'Beach', emoji: '🏖️', color: '#27c4a4', destinations: 89 },

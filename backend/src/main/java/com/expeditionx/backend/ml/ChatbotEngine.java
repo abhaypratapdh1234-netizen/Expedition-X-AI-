@@ -56,7 +56,7 @@ public class ChatbotEngine {
             );
 
             String response = webClient.post()
-                .uri("/v1beta/models/gemini-1.5-flash:generateContent?key=" + geminiApiKey)
+                .uri("/v1beta/models/gemini-3.5-flash:generateContent?key=" + geminiApiKey)
                 .contentType(MediaType.APPLICATION_JSON)
                 .bodyValue(requestBody)
                 .retrieve()

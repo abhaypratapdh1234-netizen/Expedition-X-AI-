@@ -160,7 +160,7 @@ export function Step1Destination() {
         </form>
 
         {/* Destination Chip Row */}
-        <div className="flex items-center gap-3 overflow-x-auto pb-3 justify-start sm:justify-center scrollbar-none mb-12">
+        <div className="flex flex-wrap items-center gap-3 pb-3 justify-center mb-12">
           {filteredChips.map((chip, i) => {
             const isSelected = selected?.toLowerCase() === chip.value.toLowerCase()
             return (

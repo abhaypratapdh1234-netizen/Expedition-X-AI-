@@ -62,6 +62,24 @@ export default {
         success: '#3fa796',
         warning: '#e8a33d',
         danger: '#d65d5d',
+        bg: {
+          primary: 'var(--bg-primary)',
+          secondary: 'var(--bg-secondary)',
+          card: 'var(--bg-card)',
+          'card-hover': 'var(--bg-card-hover)',
+          overlay: 'var(--bg-overlay)',
+        },
+        text: {
+          primary: 'var(--text-primary)',
+          secondary: 'var(--text-secondary)',
+          muted: 'var(--text-muted)',
+          inverse: 'var(--text-inverse)',
+        },
+        border: {
+          subtle: 'var(--border-subtle)',
+          default: 'var(--border-default)',
+          strong: 'var(--border-strong)',
+        },
       },
       fontFamily: {
         display: ['"Plus Jakarta Sans"', 'Inter', '-apple-system', 'sans-serif'],

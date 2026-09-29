@@ -16,7 +16,7 @@ public class MiscDTOs {
     // Review
     public record CreateReviewRequest(Long placeId, Integer rating, String comment, List<String> photos) {}
     public record ReviewResponse(
-        Long id, String userName, String userAvatar, Long placeId, Integer rating,
+        Long id, String userName, String userAvatar, String placeName, Integer rating,
         String comment, Double sentimentScore, String sentimentLabel,
         List<String> photos, Integer upvotes, String createdAt
     ) {}

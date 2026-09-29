@@ -23,8 +23,17 @@ dist-ssr
 *.sln
 *.sw?
 .env
+*.env
 backend/.env
 flask_backend/.env
 check_apis.py
 test_gemini.js
 backend/test_gemini.js
+
+# Backend build and DB
+target/
+**/target/
+*.class
+backend/data/
+*.mv.db
+*.trace.db

@@ -50,6 +50,7 @@ export function CrowdForecast({ placeId, placeName, placeCategory = 'attraction'
   const [groupSize, setGroupSize] = useState(1)
   const [reserveSuccess, setReserveSuccess] = useState(false)
   const [reserveError, setReserveError] = useState<string | null>(null)
+  const [reserveInfo, setReserveInfo] = useState<string | null>(null)
   
   const theme = useThemeStore(s => s.theme)
   const isDark = theme === 'dark'
@@ -95,22 +96,11 @@ export function CrowdForecast({ placeId, placeName, placeCategory = 'attraction'
   const handleReserve = () => {
     if (!selectedSlot) {
       setReserveError('Please select a time slot chip first.')
+      setReserveInfo(null)
       return
     }
-    const result = reserveSlot(placeId, selectedDate, selectedSlot, groupSize)
-    if (result.success) {
-      setReserveSuccess(true)
-      const fresh = computeCrowdForecast(placeId, placeName, selectedDate, placeCategory)
-      setForecast(fresh)
-      setTimeout(() => {
-        setReserveSuccess(false)
-        setShowReserve(false)
-        setSelectedSlot(null)
-        setGroupSize(1)
-      }, 2200)
-    } else {
-      setReserveError(result.error || 'Reservation failed')
-    }
+    setReserveError(null)
+    setReserveInfo('Slot reservation is coming soon! We are finalizing partnerships to bring you seamless booking.')
   }
 
   const scoreTrend = forecast?.overallTrend ?? 'stable'
@@ -319,6 +309,13 @@ export function CrowdForecast({ placeId, placeName, placeCategory = 'attraction'
                     <AlertCircle size={13} /> {reserveError}
                   </div>
                 )}
+                
+                {/* Info */}
+                {reserveInfo && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 700, color: '#000000', background: '#f3f4f6', padding: '8px 12px', borderRadius: 9, border: '1px solid #d1d5db' }}>
+                    <CalendarDays size={13} /> {reserveInfo}
+                  </div>
+                )}
 
                 {/* Buttons */}
                 <div style={{ display: 'flex', gap: 9 }}>
@@ -332,8 +329,8 @@ export function CrowdForecast({ placeId, placeName, placeCategory = 'attraction'
                       color: '#fff', fontSize: 13, fontWeight: 800,
                       fontFamily: "'Plus Jakarta Sans', 'Inter', sans-serif",
                       display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7,
-                      background: reserveSuccess ? 'linear-gradient(135deg, #059669, #10b981)' : 'linear-gradient(135deg, #4f46e5, #7c3aed)',
-                      boxShadow: reserveSuccess ? '0 4px 14px rgba(16,185,129,0.3)' : '0 4px 14px rgba(99,102,241,0.3)',
+                      background: reserveSuccess ? 'linear-gradient(135deg, #059669, #10b981)' : '#000000',
+                      boxShadow: reserveSuccess ? '0 4px 14px rgba(16,185,129,0.3)' : '0 4px 14px rgba(0,0,0,0.3)',
                       transition: 'all 0.25s', letterSpacing: '-0.2px',
                     }}
                   >
@@ -343,7 +340,7 @@ export function CrowdForecast({ placeId, placeName, placeCategory = 'attraction'
                   </motion.button>
                   <motion.button
                     whileTap={{ scale: 0.94 }}
-                    onClick={() => { setShowReserve(false); setSelectedSlot(null); setReserveError(null) }}
+                    onClick={() => { setShowReserve(false); setSelectedSlot(null); setReserveError(null); setReserveInfo(null) }}
                     style={{
                       padding: '12px 15px', borderRadius: 13,
                       border: isDark ? '1.5px solid #333333' : '1.5px solid var(--border-default)',
@@ -379,10 +376,10 @@ export function CrowdForecast({ placeId, placeName, placeCategory = 'attraction'
                 border: isDark ? 'none' : '1.5px solid rgba(99,102,241,0.25)',
                 cursor: 'pointer', fontSize: 13, fontWeight: 800,
                 fontFamily: "'Plus Jakarta Sans', 'Inter', sans-serif",
-                color: isDark ? '#ffffff' : '#4f46e5',
+                color: '#ffffff',
                 display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7,
-                background: isDark ? 'linear-gradient(135deg, #6366f1, #4f46e5)' : 'rgba(99,102,241,0.07)',
-                boxShadow: isDark ? '0 4px 14px rgba(99,102,241,0.35)' : 'none',
+                background: '#000000',
+                boxShadow: isDark ? '0 4px 14px rgba(0,0,0,0.5)' : '0 4px 14px rgba(0,0,0,0.2)',
                 letterSpacing: '-0.15px',
               }}
             >

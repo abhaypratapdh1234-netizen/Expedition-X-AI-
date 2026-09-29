@@ -75,6 +75,7 @@ public class PlaceService {
                 .stream().map(this::toResponse).collect(Collectors.toList());
     }
 
+    @org.springframework.transaction.annotation.Transactional
     public PlaceDetailResponse getDetail(Long id) {
         Place p = placeRepo.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Place", "id", id));

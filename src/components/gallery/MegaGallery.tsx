@@ -18,17 +18,14 @@ export function MegaGallery({ placeId, placeName }: MegaGalleryProps) {
   useEffect(() => {
     const fetchImages = async () => {
       try {
-        const res = await axios.get(`http://localhost:8080/api/v1/places/${placeId}/gallery`);
-        const pixabay = res.data.pixabay?.hits?.map((h: any) => ({ url: h.webformatURL, source: 'Pixabay', author: h.user })) || [];
-        const pexels = res.data.pexels?.photos?.map((p: any) => ({ url: p.src.large, source: 'Pexels', author: p.photographer })) || [];
-        
-        // Merge and shuffle or just combine
-        const merged = [];
-        for (let i = 0; i < Math.max(pixabay.length, pexels.length); i++) {
-          if (pixabay[i]) merged.push(pixabay[i]);
-          if (pexels[i]) merged.push(pexels[i]);
-        }
-        setImages(merged);
+        const res = await fetch(`https://api.unsplash.com/search/photos?query=${encodeURIComponent(placeName + ' tourist attraction')}&per_page=12&client_id=6zAIjVaA5qCZX9cJEtnJgmWqSjVyIPcc5upmYAP5VOM`);
+        const data = await res.json();
+        const formatted = data.results?.map((p: any) => ({
+          url: p.urls.regular,
+          source: 'Unsplash',
+          author: p.user.name
+        })) || [];
+        setImages(formatted);
       } catch (err) {
         console.error('Failed to load gallery', err);
       } finally {
@@ -36,7 +33,7 @@ export function MegaGallery({ placeId, placeName }: MegaGalleryProps) {
       }
     };
     fetchImages();
-  }, [placeId]);
+  }, [placeName]);
 
   if (loading) {
     return (

@@ -57,7 +57,7 @@ export function LocalEvents() {
             whileTap={{ scale: 0.95 }}
             key={cat} 
             onClick={() => setFilter(cat)}
-            className={`px-5 py-2.5 rounded-xl text-[14px] font-black border shrink-0 transition-colors shadow-sm ${filter === cat ? 'bg-teal-600 text-white border-teal-600' : 'bg-bg-card text-text-secondary border-border-default hover:bg-bg-secondary'}`}
+            className={`px-5 py-2.5 rounded-xl text-[14px] font-black border shrink-0 transition-colors shadow-sm ${filter === cat ? 'bg-teal-600 text-white border-teal-600' : 'bg-bg-card text-text-secondary dark:text-gray-200 border-border-default hover:bg-bg-secondary'}`}
           >
             {cat}
           </motion.button>
@@ -84,7 +84,7 @@ export function LocalEvents() {
                     <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-2 mb-1">
                       <div>
                         <h3 className="font-black text-[22px] text-text-primary leading-tight">{event.name}</h3>
-                        <span className="inline-block mt-2 px-3 py-1 rounded-md text-[12px] font-black uppercase tracking-widest bg-teal-500/10 text-teal-700 dark:text-teal-400 border border-teal-500/20">
+                        <span className="inline-block mt-2 px-3 py-1 rounded-md text-[12px] font-black uppercase tracking-widest bg-teal-500/10 text-teal-700 dark:text-teal-200 border border-teal-500/20">
                           {event.category}
                         </span>
                       </div>
@@ -93,12 +93,12 @@ export function LocalEvents() {
                       </div>
                     </div>
                     
-                    <div className="flex flex-col sm:flex-row gap-3 sm:gap-5 mt-4 text-[14px] text-text-muted font-black">
+                    <div className="flex flex-col sm:flex-row gap-3 sm:gap-5 mt-4 text-[14px] text-text-muted dark:text-gray-300 font-black">
                       <span className="flex items-center gap-2 bg-bg-secondary px-4 py-2 rounded-lg border border-border-default w-max">
-                        <Calendar size={16} className="text-teal-600" /> {event.date}
+                        <Calendar size={16} className="text-teal-600 dark:text-teal-300" /> {event.date}
                       </span>
                       <span className="flex items-center gap-2 bg-bg-secondary px-4 py-2 rounded-lg border border-border-default w-max group-hover:border-violet-500/30 transition-colors">
-                        <MapPin size={16} className="text-violet-600" /> {event.location}
+                        <MapPin size={16} className="text-violet-600 dark:text-violet-300" /> {event.location}
                       </span>
                     </div>
 

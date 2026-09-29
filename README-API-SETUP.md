@@ -43,6 +43,12 @@ To run the backend fully, you need to sign up for several free API keys. Copy `b
   - `AMADEUS_CLIENT_ID`
   - `AMADEUS_CLIENT_SECRET`
 
+## 7. Aviationstack (Live Flight Tracking)
+- **Sign up**: `https://aviationstack.com/`
+- **Cost**: Free (100 requests/month limit on the basic free plan)
+- **Note**: Used for live flight search and tracking feature on the `/app/flights` page.
+- **Env Variable**: `AVIATIONSTACK_API_KEY`
+
 ---
 
 *Note: APIs like REST Countries, Nominatim, ExchangeRate-API, and Nager.Date are keyless and require no setup.*

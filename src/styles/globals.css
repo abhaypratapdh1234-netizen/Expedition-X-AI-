@@ -34,7 +34,7 @@
   --violet-100: #EFEAFB;
 
   /* Semantic */
-  --success: #3fa796;
+  --success: #FC6C26;
   --warning: #e8a33d;
   --error: #d65d5d;
 
@@ -139,7 +139,7 @@
   --violet-100: #eeeeee;
 
   /* Semantic — kept neutral */
-  --success: #1a7a5e;
+  --success: #111111;
   --warning: #888888;
   --error:   #cc0000;
 
@@ -955,6 +955,17 @@ input:focus, textarea:focus, select:focus {
     #ffffff 90%,
     #ffffff 100%
   );
+}
+
+/* JotForm AI Chatbot Agent Styles */
+#JotformAgent-019f7b5c2ff8700084d42bce570d5896f70d,
+[id*="JotformAgent-"],
+.jfAgent-container {
+  z-index: 999999 !important;
+  position: fixed !important;
+  bottom: 24px !important;
+  right: 24px !important;
+  display: block !important;
 }
 
 

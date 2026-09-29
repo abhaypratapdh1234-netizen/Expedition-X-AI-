@@ -2,7 +2,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
-  Mic, MicOff, Send, Sparkles, Trash2, Brain, Zap,
+  Mic, MicOff, Send, Trash2, Brain, Zap,
   Umbrella, DollarSign, ShoppingBag, Globe, Receipt,
   MapPin, Search, Navigation, Hotel, Info, ChevronRight, Command
 } from 'lucide-react'
@@ -194,23 +194,7 @@ function EmptyState({ onDispatch }: { onDispatch: (text: string) => void }) {
     >
       {/* Hero */}
       <div style={{ textAlign: 'center', marginBottom: 40, paddingTop: 8 }}>
-        <motion.div
-          initial={{ scale: 0, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ type: 'spring', stiffness: 220, delay: 0.1 }}
-          style={{
-            display: 'inline-flex', alignItems: 'center', gap: 8,
-            padding: '8px 20px', borderRadius: 100, marginBottom: 24,
-            background: 'var(--bg-secondary)',
-            border: '1px solid var(--border-default)',
-            boxShadow: 'var(--shadow-sm)',
-          }}
-        >
-          <Sparkles size={13} style={{ color: 'var(--text-secondary)' }} />
-          <span style={{ fontSize: 12, fontWeight: 900, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.18em' }}>
-            {INTENTS.length} Commands · Deterministic · Zero Guessing
-          </span>
-        </motion.div>
+
 
         <motion.h1
           initial={{ opacity: 0, y: 18 }}

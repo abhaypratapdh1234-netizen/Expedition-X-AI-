@@ -13,6 +13,7 @@ const BOTTOM_ITEMS = [
 ]
 
 const MORE_ITEMS = [
+  { label: 'Flight Search', to: '/app/flights' },
   { label: 'My Bookings', to: '/app/bookings' },
   { label: 'Wishlist', to: '/app/wishlist' },
   { label: 'AI Assistant', to: '/app/assistant' },

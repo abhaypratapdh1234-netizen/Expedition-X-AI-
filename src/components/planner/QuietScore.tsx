@@ -22,15 +22,15 @@ interface QuietScoreProps {
 const FONT = "'Plus Jakarta Sans', 'Inter', 'Segoe UI', sans-serif"
 
 function scoreColor(s: number) {
-  if (s >= 80) return '#059669'
-  if (s >= 60) return '#0d9488'
+  if (s >= 80) return '#111111'
+  if (s >= 60) return '#333333'
   if (s >= 40) return '#d97706'
   if (s >= 20) return '#ea580c'
   return '#dc2626'
 }
 function scoreBg(s: number, isDark: boolean) {
-  if (s >= 80) return { bg: isDark ? '#022c22' : '#d1fae5', border: isDark ? '#065f46' : '#6ee7b7', text: isDark ? '#34d399' : '#065f46' }
-  if (s >= 60) return { bg: isDark ? '#115e59' : '#ccfbf1', border: isDark ? '#0f766e' : '#5eead4', text: isDark ? '#2dd4bf' : '#0f766e' }
+  if (s >= 80) return { bg: isDark ? '#111111' : '#f3f4f6', border: isDark ? '#333333' : '#d1d5db', text: isDark ? '#ffffff' : '#000000' }
+  if (s >= 60) return { bg: isDark ? '#1a1a1a' : '#e5e7eb', border: isDark ? '#444444' : '#9ca3af', text: isDark ? '#e5e7eb' : '#111111' }
   if (s >= 40) return { bg: isDark ? '#78350f' : '#fef3c7', border: isDark ? '#b45309' : '#fcd34d', text: isDark ? '#fbbf24' : '#92400e' }
   if (s >= 20) return { bg: isDark ? '#7c2d12' : '#ffedd5', border: isDark ? '#9a3412' : '#fed7aa', text: isDark ? '#fdba74' : '#9a3412' }
   return { bg: isDark ? '#7f1d1d' : '#fee2e2', border: isDark ? '#991b1b' : '#fca5a5', text: isDark ? '#f87171' : '#991b1b' }
@@ -121,7 +121,7 @@ export function QuietScore({ placeId, placeCategory = 'default' }: QuietScorePro
       borderRadius: 24, overflow: 'hidden',
       background: isDark ? '#111111' : 'var(--bg-card)',
       border: isDark ? '1.5px solid #222222' : '1.5px solid var(--border-subtle)',
-      boxShadow: '0 4px 24px rgba(20,184,166,0.08), 0 1px 4px rgba(0,0,0,0.04)',
+      boxShadow: '0 4px 24px rgba(0,0,0,0.08), 0 1px 4px rgba(0,0,0,0.04)',
     }}>
 
       {/* ══ HEADER ══ */}
@@ -129,14 +129,14 @@ export function QuietScore({ placeId, placeCategory = 'default' }: QuietScorePro
         padding: '20px 24px 18px',
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
         borderBottom: isDark ? '1.5px solid #222222' : '1.5px solid #f3f4f6',
-        background: isDark ? 'linear-gradient(135deg, rgba(20,184,166,0.1), rgba(8,145,178,0.05))' : 'linear-gradient(135deg, rgba(204,251,241,0.3), rgba(186,230,253,0.15))',
+        background: isDark ? 'linear-gradient(135deg, rgba(34,34,34,0.3), rgba(17,17,17,0.15))' : 'linear-gradient(135deg, rgba(243,244,246,0.5), rgba(229,231,235,0.3))',
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
           <div style={{
             width: 46, height: 46, borderRadius: 14, flexShrink: 0,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            background: 'linear-gradient(135deg, #0d9488, #0891b2)',
-            boxShadow: '0 4px 12px rgba(13,148,136,0.35)',
+            background: isDark ? 'linear-gradient(135deg, #222222, #111111)' : 'linear-gradient(135deg, #111111, #000000)',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.2)',
           }}>
             <VolumeX size={21} style={{ color: '#ffffff' }} />
           </div>
@@ -282,14 +282,14 @@ export function QuietScore({ placeId, placeCategory = 'default' }: QuietScorePro
               initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
               style={{
                 display: 'flex', alignItems: 'center', gap: 10, padding: '12px 16px', borderRadius: 14,
-                background: lastSnap.flaggedSuspicious ? (isDark ? '#78350f' : '#fffbeb') : (isDark ? '#065f46' : '#f0fdf4'),
-                border: `1.5px solid ${lastSnap.flaggedSuspicious ? (isDark ? '#b45309' : '#fcd34d') : (isDark ? '#0f766e' : '#86efac')}`,
+                background: lastSnap.flaggedSuspicious ? (isDark ? '#78350f' : '#fffbeb') : (isDark ? '#111111' : '#f3f4f6'),
+                border: `1.5px solid ${lastSnap.flaggedSuspicious ? (isDark ? '#b45309' : '#fcd34d') : (isDark ? '#333333' : '#d1d5db')}`,
               }}
             >
               {lastSnap.flaggedSuspicious
                 ? <AlertTriangle size={15} style={{ color: '#d97706', flexShrink: 0 }} />
-                : <CheckCircle size={15} style={{ color: '#16a34a', flexShrink: 0 }} />}
-              <span style={{ fontSize: 13, fontWeight: 700, color: lastSnap.flaggedSuspicious ? (isDark ? '#fef3c7' : '#92400e') : (isDark ? '#a7f3d0' : '#15803d'), fontFamily: FONT }}>
+                : <CheckCircle size={15} style={{ color: isDark ? '#ffffff' : '#000000', flexShrink: 0 }} />}
+              <span style={{ fontSize: 13, fontWeight: 700, color: lastSnap.flaggedSuspicious ? (isDark ? '#fef3c7' : '#92400e') : (isDark ? '#ffffff' : '#000000'), fontFamily: FONT }}>
                 {lastSnap.flaggedSuspicious
                   ? `~${lastSnap.approxDb} dB — flagged as unusual, will be reviewed`
                   : `✓ Recorded: ~${lastSnap.approxDb} dB (relative)`}
@@ -309,9 +309,9 @@ export function QuietScore({ placeId, placeCategory = 'default' }: QuietScorePro
               onClick={() => handleRecord(true)}
               style={{
                 alignSelf: 'flex-start', padding: '7px 16px', borderRadius: 10,
-                border: '1.5px solid rgba(20,184,166,0.4)', cursor: 'pointer',
-                fontSize: 12, fontWeight: 800, color: '#0d9488',
-                background: 'rgba(20,184,166,0.08)', fontFamily: FONT,
+                border: isDark ? '1.5px solid rgba(255,255,255,0.4)' : '1.5px solid rgba(0,0,0,0.4)', cursor: 'pointer',
+                fontSize: 12, fontWeight: 800, color: isDark ? '#ffffff' : '#000000',
+                background: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)', fontFamily: FONT,
               }}
             >
               Run Simulated Demo Instead
@@ -322,17 +322,17 @@ export function QuietScore({ placeId, placeCategory = 'default' }: QuietScorePro
         {/* Record button */}
         {!isRecording && (
           <motion.button
-            whileHover={{ scale: 1.015, boxShadow: '0 6px 20px rgba(13,148,136,0.25)' }}
+            whileHover={{ scale: 1.015, boxShadow: isDark ? '0 6px 20px rgba(255,255,255,0.1)' : '0 6px 20px rgba(0,0,0,0.15)' }}
             whileTap={{ scale: 0.975 }}
             onClick={() => handleRecord(false)}
             style={{
               width: '100%', padding: '15px 0', borderRadius: 16,
-              border: isDark ? 'none' : '1.5px solid rgba(13,148,136,0.35)',
+              border: isDark ? '1.5px solid #333333' : '1.5px solid #d1d5db',
               cursor: 'pointer', fontSize: 14, fontWeight: 800,
-              fontFamily: FONT, color: isDark ? '#ffffff' : '#0d9488',
+              fontFamily: FONT, color: isDark ? '#ffffff' : '#000000',
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 9,
-              background: isDark ? 'linear-gradient(135deg, #0d9488, #0891b2)' : 'linear-gradient(135deg, rgba(204,251,241,0.5), rgba(186,230,253,0.3))',
-              boxShadow: isDark ? '0 4px 14px rgba(13,148,136,0.35)' : 'none',
+              background: isDark ? 'linear-gradient(135deg, #333333, #111111)' : 'linear-gradient(135deg, #f9fafb, #f3f4f6)',
+              boxShadow: isDark ? '0 4px 14px rgba(0,0,0,0.35)' : 'none',
               letterSpacing: '-0.2px', transition: 'all 0.2s',
             }}
           >

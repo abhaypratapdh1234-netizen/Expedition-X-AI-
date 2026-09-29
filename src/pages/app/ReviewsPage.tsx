@@ -1,12 +1,13 @@
 import { useState, useEffect, useMemo } from 'react'
 import { GlowingEffect } from '@/components/ui/glowing-effect'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Star, ThumbsUp, Sparkles, Send, MessageSquare, MapPin, Search, TrendingUp, ChevronRight } from 'lucide-react'
+import { Star, ThumbsUp, Sparkles, Send, MessageSquare, MapPin, Search, TrendingUp, ChevronRight, ArrowRight } from 'lucide-react'
 import { aiService } from '../../services/aiService'
 import { reviewService, type ReviewResponse } from '../../services/reviewService'
 import { placeService } from '../../services/placeService'
 import { pageTransition } from '../../motion/variants'
 import { analyzeReviewSentiment, rankReviewsByHelpfulness } from '../../services/intelligenceService'
+import { useAuthStore } from '../../stores/authStore'
 
 const SENTIMENT_META: Record<string, { label: string; bg: string; color: string; border: string; emoji: string }> = {
   Positive: { label: 'Positive', bg: '#f0fdf4', color: '#15803d', border: '#86efac', emoji: '✨' },
@@ -48,6 +49,27 @@ export function ReviewsPage() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [aiSentiment, setAiSentiment] = useState<{ sentiment: string; score: number } | null>(null)
   const [focusedField, setFocusedField] = useState<string | null>(null)
+
+  const user = useAuthStore(s => s.user)
+  const userStorageKey = `liked_reviews_${user?.id || user?.email || 'guest'}`
+
+  const [likedReviewIds, setLikedReviewIds] = useState<number[]>(() => {
+    try {
+      const stored = localStorage.getItem(`liked_reviews_${user?.id || user?.email || 'guest'}`)
+      return stored ? JSON.parse(stored) : []
+    } catch {
+      return []
+    }
+  })
+
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem(userStorageKey)
+      setLikedReviewIds(stored ? JSON.parse(stored) : [])
+    } catch {
+      setLikedReviewIds([])
+    }
+  }, [userStorageKey])
 
   useEffect(() => {
     fetchReviews()
@@ -95,10 +117,12 @@ export function ReviewsPage() {
   }, [placeQuery, selectedPlaceId])
 
   const handleSubmit = async () => {
-    if (!newReview || !selectedPlaceId || rating === 0) return
+    if (!newReview || rating === 0) return
     setIsSubmitting(true)
     try {
-      await reviewService.submitReview(selectedPlaceId, rating, newReview, placeQuery)
+      const finalPlaceId = selectedPlaceId || 999999999; // Generic ID for platform review
+      const finalPlaceName = placeQuery || "Expedition X AI Platform";
+      await reviewService.submitReview(finalPlaceId, rating, newReview, finalPlaceName)
       await fetchReviews()
       
       setShowForm(false)
@@ -116,10 +140,26 @@ export function ReviewsPage() {
   }
 
   const handleUpvote = async (id: number) => {
+    const isAlreadyLiked = likedReviewIds.includes(id)
+    
+    // One user only one like: clicking toggles like (1 like max per user)
+    const newLikedIds = isAlreadyLiked
+      ? likedReviewIds.filter(likedId => likedId !== id)
+      : [...likedReviewIds, id]
+
+    setLikedReviewIds(newLikedIds)
     try {
-      await reviewService.upvoteReview(id)
-      setReviews(reviews.map(r => r.id === id ? { ...r, upvotes: r.upvotes + 1 } : r))
+      localStorage.setItem(userStorageKey, JSON.stringify(newLikedIds))
     } catch {}
+
+    const delta = isAlreadyLiked ? -1 : 1
+    setReviews(prev => prev.map(r => r.id === id ? { ...r, upvotes: Math.max(0, (r.upvotes || 0) + delta) } : r))
+
+    try {
+      await reviewService.upvoteReview(id, isAlreadyLiked)
+    } catch (err) {
+      console.error('Failed to sync upvote', err)
+    }
   }
 
   const baseFiltered = filter === 'all' ? reviews : reviews.filter(r => r.rating === Number(filter))
@@ -317,7 +357,7 @@ export function ReviewsPage() {
                     Cancel
                   </motion.button>
                   <motion.button whileHover={{ scale: 1.03, y: -1 }} whileTap={{ scale: 0.97 }}
-                    disabled={rating === 0 || !newReview || !selectedPlaceId || isSubmitting}
+                    disabled={rating === 0 || !newReview || isSubmitting}
                     onClick={handleSubmit}
                     className="flex items-center gap-2.5 px-7 py-3 rounded-full text-white text-sm font-bold uppercase tracking-widest disabled:opacity-40 relative overflow-hidden"
                     style={{ background: 'linear-gradient(135deg,#FC6C26,#FC6C26)', boxShadow: '0 10px 28px rgba(252, 108, 38,0.4)' }}>
@@ -477,12 +517,34 @@ export function ReviewsPage() {
                       {/* Footer */}
                       <div className="flex items-center justify-between pt-5"
                         style={{ borderTop: '1px solid rgba(0,0,0,0.05)' }}>
-                        <motion.button onClick={() => handleUpvote(review.id)} whileHover={{ scale: 1.05, x: 2 }} whileTap={{ scale: 0.95 }}
-                          className="flex items-center gap-2 px-5 py-2.5 rounded-full text-[13px] font-black uppercase tracking-widest transition-all shadow-sm"
-                          style={{ background: 'var(--bg-secondary)', color: 'var(--text-primary)', border: '1px solid var(--border-subtle)' }}>
-                          <ThumbsUp size={16} className="text-[#FC6C26]" />
-                          {review.upvotes} Helpful
-                        </motion.button>
+                        {(() => {
+                          const isLiked = likedReviewIds.includes(review.id)
+                          return (
+                            <motion.button
+                              onClick={() => handleUpvote(review.id)}
+                              whileHover={{ scale: 1.05, x: 2 }}
+                              whileTap={{ scale: 0.95 }}
+                              className="flex items-center gap-2 px-5 py-2.5 rounded-full text-[13px] font-black uppercase tracking-widest transition-all shadow-sm cursor-pointer group"
+                              title={isLiked ? "You marked this as helpful (click to undo)" : "Mark as helpful (1 like per user)"}
+                              style={{
+                                background: isLiked ? 'rgba(252, 108, 38, 0.14)' : 'var(--bg-secondary)',
+                                color: isLiked ? '#FC6C26' : 'var(--text-primary)',
+                                border: isLiked ? '1.5px solid #FC6C26' : '1px solid var(--border-subtle)',
+                                boxShadow: isLiked ? '0 4px 14px rgba(252, 108, 38, 0.2)' : 'none',
+                              }}>
+                              <ThumbsUp
+                                size={16}
+                                className={`transition-all duration-300 ${isLiked ? 'fill-[#FC6C26] text-[#FC6C26] scale-110' : 'text-[#FC6C26] group-hover:scale-110'}`}
+                              />
+                              <span>{review.upvotes} Helpful</span>
+                              {isLiked && (
+                                <span className="ml-1 text-[10px] font-black px-2 py-0.5 rounded-full bg-[#FC6C26] text-white tracking-wider">
+                                  ✓ Liked
+                                </span>
+                              )}
+                            </motion.button>
+                          )
+                        })()}
                       </div>
                     </div>
                   </motion.div>

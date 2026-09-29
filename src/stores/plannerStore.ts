@@ -36,6 +36,9 @@ export interface TripSession {
   budgetPerDay: number
   party: string
   waypoints: string[]
+  // Optional: selected flight info merged from flightStore
+  selectedFlightIata?: string
+  selectedFlightLabel?: string
 }
 
 interface PlannerState {

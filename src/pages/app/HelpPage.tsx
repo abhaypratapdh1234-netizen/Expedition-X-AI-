@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { MessageCircle, Mail, Phone, Search, ChevronDown, ChevronRight, Send, Bot, Sparkles, Check } from 'lucide-react'
+import { MessageCircle, Phone, Search, ChevronDown, ChevronRight, Send, Bot, Sparkles, Check } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { pageTransition, staggerContainer, itemPop } from '../../motion/variants'
 
@@ -81,17 +81,6 @@ const CONTACT_OPTIONS = [
     border: '#99f6e4',
     shadow: 'rgba(13,148,136,0.2)'
   },
-  {
-    icon: Mail,
-    label: 'Email Support',
-    desc: 'support@expeditionx.ai',
-    cta: 'Send Email',
-    to: null,
-    bg: 'linear-gradient(135deg, #fffbeb, #fef3c7)',
-    color: '#d97706',
-    border: '#fde68a',
-    shadow: 'rgba(217,119,6,0.2)'
-  },
 ]
 
 export function HelpPage() {
@@ -160,7 +149,7 @@ export function HelpPage() {
       ══════════════════════════════════════════════ */}
       <motion.div
         variants={staggerContainer} initial="hidden" animate="show"
-        className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-12"
+        className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-12 max-w-2xl mx-auto"
       >
         {CONTACT_OPTIONS.map((opt, i) => (
           <motion.div key={opt.label} variants={itemPop}>

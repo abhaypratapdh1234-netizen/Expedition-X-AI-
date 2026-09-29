@@ -2,7 +2,7 @@ import { useEffect, useState, useRef } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { buttonInteraction, cardInteraction, iconButtonInteraction } from '../../../motion/variants'
-import { Search, Grid, List, Star, MapPin, Heart, TrendingUp, ChevronRight, SlidersHorizontal, Sparkles, X } from 'lucide-react'
+import { Search, Grid, List, Star, MapPin, Heart, TrendingUp, ChevronRight, ChevronDown, SlidersHorizontal, Sparkles, X } from 'lucide-react'
 import { THEMES } from '../../../data/mockData'
 import { useExploreStore } from '../../../stores/exploreStore'
 import { useWishlistStore } from '../../../stores/wishlistStore'
@@ -132,7 +132,22 @@ export function ExplorePage() {
           </div>
         </motion.div>
 
-        <div className="flex gap-4">
+        <div className="flex gap-4 items-center flex-wrap">
+          <div className="relative group z-20">
+            <select
+               value={filters.country || ''}
+               onChange={(e) => setFilters({ country: e.target.value || undefined })}
+               className="appearance-none bg-black text-white px-6 py-4 rounded-[20px] font-extrabold text-[15px] tracking-widest uppercase outline-none cursor-pointer pr-12 shadow-[0_4px_15px_rgba(0,0,0,0.2)] hover:shadow-[0_8px_25px_rgba(0,0,0,0.3)] transition-all h-[54px] w-full min-w-[200px]"
+            >
+               <option value="">ALL COUNTRIES</option>
+               <option value="India">INDIA</option>
+               <option value="foreign">OTHER FOREIGN COUNTRIES</option>
+            </select>
+            <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-white opacity-70 group-hover:opacity-100 transition-opacity">
+              <ChevronDown size={18} />
+            </div>
+          </div>
+
           <motion.button 
             whileHover={{ y: -2, boxShadow: '0 8px 25px rgba(0,0,0,0.08)' }}
             whileTap={{ scale: 0.95 }}

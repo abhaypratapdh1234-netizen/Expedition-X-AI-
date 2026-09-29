@@ -18,7 +18,7 @@ export function ToolkitTabs() {
   const isLight = theme === 'light'
   
   return (
-    <div className="flex gap-3 mb-8 overflow-x-auto pb-4 pt-1 hide-scrollbar -mx-4 px-4 sm:mx-0 sm:px-0">
+    <div className="flex flex-wrap items-center gap-2.5 sm:gap-3 mb-8 pt-1">
       {TABS.map(tab => (
         <NavLink 
           key={tab.path} 
@@ -27,8 +27,8 @@ export function ToolkitTabs() {
         >
           {({ isActive }) => (
             <div 
-              className={`relative z-10 px-6 py-3 rounded-[16px] text-[16px] font-bold antialiased capitalize whitespace-nowrap transition-all duration-500 flex items-center gap-2.5 overflow-hidden ${
-                isActive ? '' : 'hover:-translate-y-1'
+              className={`relative z-10 px-4 sm:px-6 py-2.5 sm:py-3 rounded-[16px] text-[15px] sm:text-[16px] font-bold antialiased capitalize whitespace-nowrap transition-all duration-300 flex items-center gap-2 sm:gap-2.5 overflow-hidden ${
+                isActive ? '' : 'hover:-translate-y-0.5'
               }`}
               style={{
                 background: isActive 

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion } from 'framer-motion'
 import { Sun, CloudRain, Cloud, Wind, Droplets, Sparkles, AlertTriangle, Search } from 'lucide-react'
 import { aiService } from '../../../services/aiService'
 import { useTripStore } from '../../../stores/tripStore'
@@ -35,8 +35,56 @@ export function WeatherPage() {
       if (!activeDestination) return
       setIsLoading(true)
       try {
-        const data = await aiService.getWeatherSuggestions(activeDestination)
-        setWeatherData(data)
+        const geoRes = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${activeDestination}&count=1`)
+        const geoData = await geoRes.json()
+        if (!geoData.results || geoData.results.length === 0) throw new Error("Location not found")
+        
+        const { latitude, longitude } = geoData.results[0]
+        
+        const weatherRes = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${latitude}&longitude=${longitude}&current_weather=true&daily=temperature_2m_max,temperature_2m_min,weathercode,precipitation_sum&timezone=auto`)
+        const weatherDataObj = await weatherRes.json()
+        
+        const getCondition = (code: number) => {
+          if (code === 0) return { icon: '☀️', condition: 'Clear Skies' }
+          if (code <= 3) return { icon: '⛅', condition: 'Partly Cloudy' }
+          if (code <= 48) return { icon: '⛅', condition: 'Fog' }
+          if (code <= 67) return { icon: '🌧️', condition: 'Rainy' }
+          if (code <= 77) return { icon: '❄️', condition: 'Snowy' }
+          return { icon: '⛈️', condition: 'Stormy' }
+        }
+
+        const currentCond = getCondition(weatherDataObj.current_weather.weathercode)
+        
+        const forecast = weatherDataObj.daily.time.map((t: string, i: number) => {
+          const cond = getCondition(weatherDataObj.daily.weathercode[i])
+          const date = new Date(t)
+          const dayStr = date.toLocaleDateString('en-US', { weekday: 'short' })
+          return {
+            day: dayStr,
+            icon: cond.icon,
+            high: Math.round(weatherDataObj.daily.temperature_2m_max[i]),
+            low: Math.round(weatherDataObj.daily.temperature_2m_min[i]),
+            condition: cond.condition,
+            precip: Math.round(weatherDataObj.daily.precipitation_sum[i])
+          }
+        })
+
+        const aiData = await aiService.getWeatherSuggestions(activeDestination).catch(() => null)
+        
+        setWeatherData({
+          current: {
+            temp: Math.round(weatherDataObj.current_weather.temperature),
+            wind: Math.round(weatherDataObj.current_weather.windspeed),
+            icon: currentCond.icon,
+            condition: currentCond.condition,
+            humidity: 45 // fallback humidity as basic current_weather doesn't have it unless specifically requested
+          },
+          forecast: forecast,
+          ai: aiData || {
+             bestMonths: ['Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar'],
+             warning: 'Enjoy your trip!'
+          }
+        })
       } catch (error) {
         console.error("Failed to fetch weather data", error)
       } finally {
@@ -60,19 +108,9 @@ export function WeatherPage() {
     }
   }
 
-  const today = weatherData.monthlyData[0] // Mocking first month as today for demo purposes
-  const TodayIcon = getIcon(today.icon)
-
-  // Generate a mock 7-day forecast based on the AI data to maintain the UI structure
-  const FORECAST = [
-    { day: 'Mon', icon: today.icon, high: today.avgTemp + 2, low: today.avgTemp - 3, condition: 'Sunny', precip: today.rainfall * 5 },
-    { day: 'Tue', icon: '⛅', high: today.avgTemp + 1, low: today.avgTemp - 2, condition: 'Cloudy', precip: 20 },
-    { day: 'Wed', icon: '🌧️', high: today.avgTemp - 3, low: today.avgTemp - 5, condition: 'Rainy', precip: 80 },
-    { day: 'Thu', icon: '☀️', high: today.avgTemp + 3, low: today.avgTemp - 1, condition: 'Sunny', precip: 5 },
-    { day: 'Fri', icon: '☀️', high: today.avgTemp + 4, low: today.avgTemp, condition: 'Sunny', precip: 0 },
-    { day: 'Sat', icon: '⛅', high: today.avgTemp + 1, low: today.avgTemp - 2, condition: 'Partly Cloudy', precip: 15 },
-    { day: 'Sun', icon: '☀️', high: today.avgTemp + 2, low: today.avgTemp - 1, condition: 'Sunny', precip: 10 },
-  ]
+  const TodayIcon = getIcon(weatherData.current.icon)
+  const current = weatherData.current
+  const FORECAST = weatherData.forecast
 
   return (
     <motion.div variants={pageTransition} initial="initial" animate="animate" exit="exit" className="p-4 sm:p-6 lg:p-8 pb-24 lg:pb-8">
@@ -95,7 +133,8 @@ export function WeatherPage() {
                 setActiveDestination(searchQuery.trim())
               }
             }}
-            className="w-full pl-12 pr-4 py-3.5 rounded-xl bg-bg-secondary text-text-primary text-[16px] font-black border-none outline-none focus:ring-2 focus:ring-teal-500 transition-shadow"
+            className="w-full pl-12 pr-4 py-3.5 rounded-xl text-[16px] font-black border border-border-subtle focus:border-black outline-none focus:ring-2 focus:ring-black/10 dark:focus:border-white dark:focus:ring-white/10 transition-all placeholder:text-text-muted placeholder:font-normal"
+            style={{ backgroundColor: 'var(--bg-secondary)', color: 'var(--text-primary)' }}
           />
           <Search size={20} className="absolute left-4 top-1/2 -translate-y-1/2 text-text-muted" />
         </div>
@@ -105,7 +144,7 @@ export function WeatherPage() {
           onClick={() => {
             if (searchQuery.trim()) setActiveDestination(searchQuery.trim())
           }}
-          className="w-full sm:w-auto px-8 py-3.5 bg-teal-600 hover:bg-teal-700 text-white text-[16px] font-black rounded-xl shadow-md transition-colors whitespace-nowrap"
+          className="w-full sm:w-auto px-8 py-3.5 !bg-black hover:!bg-neutral-800 !text-white text-[16px] font-black rounded-xl shadow-md transition-colors whitespace-nowrap cursor-pointer border border-black dark:border-neutral-800"
         >
           Get Weather
         </motion.button>
@@ -125,17 +164,17 @@ export function WeatherPage() {
           <p className="text-white/90 text-[14px] mb-3 font-black tracking-[0.15em] uppercase">📍 {activeDestination || 'Destination'} Forecast</p>
           <div className="flex items-center justify-center gap-4 mb-2">
             <TodayIcon size={64} className="text-yellow-300 drop-shadow-md" />
-            <motion.p key={today.avgTemp} initial={{ y: -20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} className="text-[96px] font-black text-white font-display tracking-tight">
-              {today.avgTemp}°
+            <motion.p key={current.temp} initial={{ y: -20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} className="text-[96px] font-black text-white font-display tracking-tight">
+              {current.temp}°
             </motion.p>
           </div>
-          <p className="text-white text-[24px] font-black tracking-wide">Clear Skies</p>
-          <p className="text-white/80 text-[16px] mt-2 font-black">Feels like {today.avgTemp + 2}° · Humidity 45%</p>
+          <p className="text-white text-[24px] font-black tracking-wide">{current.condition}</p>
+          <p className="text-white/80 text-[16px] mt-2 font-black">Feels like {current.temp + 2}° · Humidity {current.humidity}%</p>
 
           <div className="flex justify-center gap-8 mt-6 pt-6 border-t border-white/10">
             {[
-              { icon: Wind, label: '12 km/h', desc: 'Wind' },
-              { icon: Droplets, label: `${Math.round(today.rainfall * 2)}%`, desc: 'Humidity' },
+              { icon: Wind, label: `${current.wind} km/h`, desc: 'Wind' },
+              { icon: Droplets, label: `${current.humidity}%`, desc: 'Humidity' },
               { icon: Sun, label: 'UV 8', desc: 'Very High' },
             ].map((item, i) => (
               <motion.div key={item.desc} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 + (i * 0.1) }} className="flex flex-col items-center gap-1.5">
@@ -153,7 +192,7 @@ export function WeatherPage() {
         <div className="lg:col-span-2">
           <h2 className="font-black text-[14px] mb-5 text-text-primary uppercase tracking-widest">7-Day Forecast</h2>
           <motion.div variants={staggerContainer} initial="hidden" animate="show" className="space-y-3">
-            {FORECAST.map((day, i) => {
+            {FORECAST.map((day: any) => {
               const DayIcon = getIcon(day.icon)
               return (
                 <motion.div key={day.day} variants={itemPop} className="group">
@@ -188,8 +227,8 @@ export function WeatherPage() {
               <span className="text-[14px] font-black text-violet-600 dark:text-violet-400 uppercase tracking-widest">AI Recommendation</span>
             </div>
             <p className="text-[16px] font-black leading-relaxed text-text-secondary relative z-10">
-              <strong className="text-text-primary font-black block mb-1">Best Time to Visit: {weatherData.bestTime}</strong>
-              {weatherData.seasonalAdvice}
+              <strong className="text-text-primary font-black block mb-1">Best Time to Visit: {weatherData.ai.bestMonths?.join(', ') || 'Anytime'}</strong>
+              We recommend checking local events during these months.
             </p>
           </motion.div>
 
@@ -199,7 +238,7 @@ export function WeatherPage() {
               <span className="text-[14px] font-black text-amber-600 dark:text-amber-400 uppercase tracking-widest">Weather Warning</span>
             </div>
             <p className="text-[16px] font-black text-text-secondary">
-              Rain expected Wednesday ({FORECAST[2].precip}% chance). Plan indoor activities like museums or cultural centers for that day. 
+              {weatherData.ai.warning}
             </p>
           </motion.div>
         </div>

@@ -62,14 +62,7 @@ export function NotFoundPage() {
         >
           404
         </h1>
-        <div
-          className="bg-[var(--bg-card)] rounded-full absolute h-[22vh] sm:h-[26vh] md:h-[50vh]"
-          style={{
-            width: 'clamp(120px, 20vw, 400px)',
-            transform: `scaleY(${scaleY})`,
-            transformOrigin: 'center'
-          }}
-        />
+
       </div>
 
 

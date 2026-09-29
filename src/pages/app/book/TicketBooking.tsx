@@ -16,14 +16,14 @@ export function TicketBooking() {
     async function loadTickets() {
       setIsLoading(true)
       try {
-        const flights = await bookingService.searchFlights('BOM', 'DEL', '2026-08-10')
-        setTickets(flights)
+        const results = await bookingService.searchTransport(mode, 'BOM', 'DEL', '2026-08-10')
+        setTickets(results)
       } finally {
         setIsLoading(false)
       }
     }
     loadTickets()
-  }, [])
+  }, [mode])
 
   const ticket = tickets.find(t => t.id === selectedTicket)
 
@@ -91,7 +91,7 @@ export function TicketBooking() {
                   <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 rounded-xl bg-[var(--bg-card)] text-teal-600 flex items-center justify-center">
-                        <Plane size={20} />
+                        {mode === 'flight' ? <Plane size={20} /> : mode === 'train' ? <Train size={20} /> : <Bus size={20} />}
                       </div>
                       <div>
                         <h3 className="font-bold text-text-primary text-base">{t.airline}</h3>

@@ -94,6 +94,7 @@ app:
     pixabay: ${PIXABAY_API_KEY:}
     pexels: ${PEXELS_API_KEY:}
     exchangerate: ${EXCHANGE_RATE_API_KEY:}
+    aviationstack: ${AVIATIONSTACK_API_KEY:}
 
 # Swagger
 springdoc:

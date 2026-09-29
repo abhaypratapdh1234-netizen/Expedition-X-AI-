@@ -12,6 +12,7 @@ import { LocalTimeWidget } from '../../../components/widgets/LocalTimeWidget'
 import { MegaGallery } from '../../../components/gallery/MegaGallery'
 import { CrowdForecast } from '../../../components/planner/CrowdForecast'
 import { QuietScore } from '../../../components/planner/QuietScore'
+import { DestinationExplanation } from './DestinationExplanation'
 
 export function PlaceDetailPage() {
   const { id } = useParams()
@@ -195,8 +196,8 @@ export function PlaceDetailPage() {
             {...buttonInteraction}
             whileTap={{ scale: 0.98 }}
             onClick={handleAddItinerary}
-            className="flex items-center gap-2 px-6 py-3 rounded-xl text-white font-semibold shadow-md relative overflow-hidden flex-1 sm:flex-none justify-center"
-            style={{ background: addedToTrip ? 'var(--success)' : 'linear-gradient(135deg, var(--teal-600), var(--teal-800))' }}>
+            className={`flex items-center gap-2 px-6 py-3 rounded-xl text-white font-semibold shadow-md relative overflow-hidden flex-1 sm:flex-none justify-center ${addedToTrip ? 'bg-gradient-to-br from-teal-500 to-teal-400 text-white' : 'bg-gradient-to-br from-gray-900 to-black dark:from-teal-600 dark:to-teal-800 text-white'}`}
+          >
             <AnimatePresence mode="wait">
               {addedToTrip ? (
                 <motion.div key="check" initial={{ y: -20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 20, opacity: 0 }} className="flex items-center gap-2">
@@ -215,22 +216,7 @@ export function PlaceDetailPage() {
           </Link>
         </div>
 
-        {/* Tabs */}
-        <div className="flex gap-1 overflow-x-auto border-b border-border-subtle pt-2">
-          {TABS.map(tab => (
-            <button key={tab} onClick={() => setActiveTab(tab)}
-              className="px-5 py-3 text-sm font-semibold capitalize whitespace-nowrap transition-all border-b-2 relative"
-              style={{
-                borderBottomColor: activeTab === tab ? 'var(--teal-600)' : 'transparent',
-                color: activeTab === tab ? 'var(--teal-600)' : 'var(--text-muted)',
-              }}>
-              {activeTab === tab && (
-                <motion.div layoutId="activetab" className="absolute bottom-[-2px] left-0 right-0 h-[2px] bg-teal-600" />
-              )}
-              {tab}
-            </button>
-          ))}
-        </div>
+
 
         {/* Tab Content */}
         <div className="min-h-[300px]">
@@ -278,6 +264,9 @@ export function PlaceDetailPage() {
                     </div>
                   </motion.div>
                   
+                  {/* Detailed Explanation & Interesting Facts */}
+                  <DestinationExplanation placeName={dest.name} />
+
                   {/* Mega Gallery */}
                   <div className="mt-8">
                     <h3 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-teal-800 to-teal-500 mb-3 tracking-tight">
@@ -304,64 +293,7 @@ export function PlaceDetailPage() {
                 </div>
               )}
 
-              {activeTab === 'hotels' && (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {dest.nearbyHotels?.map((hotel: any) => (
-                    <Link key={hotel.id} to={`/app/book/hotels/${hotel.id}`}>
-                      <div className="flex gap-4 p-3 rounded-xl bg-bg-card border border-border-subtle shadow-card hover:-translate-y-1 transition-transform">
-                        <img src={hotel.imageUrl || hotel.image} alt={hotel.name} className="w-20 h-20 rounded-lg object-cover shrink-0" />
-                        <div className="flex-1 min-w-0">
-                          <h3 className="font-semibold text-text-primary truncate">{hotel.name}</h3>
-                          <div className="flex items-center justify-between mt-1">
-                            <p className="font-bold text-amber-500 text-sm">₹{hotel.pricePerNight?.toLocaleString() ?? 0}</p>
-                            <div className="flex items-center gap-1 text-xs text-text-muted">
-                              <Star size={10} className="fill-yellow-400 text-yellow-400" /> {hotel.rating}
-                            </div>
-                          </div>
-                          <p className="text-xs text-text-muted mt-1 truncate">{hotel.location}</p>
-                        </div>
-                      </div>
-                    </Link>
-                  ))}
-                </div>
-              )}
 
-              {activeTab === 'food' && (
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                  {getFoodForCity(dest.city).map(food => (
-                    <div key={food.name} className="p-4 rounded-xl text-center bg-bg-card border border-border-subtle shadow-sm hover:shadow-md transition-shadow">
-                      <div className="text-4xl mb-2">{food.emoji}</div>
-                      <p className="font-semibold text-sm text-text-primary">{food.name}</p>
-                      <p className="text-xs mt-1 text-amber-500 font-medium">{food.price}</p>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              {activeTab === 'reviews' && (
-                <div className="space-y-4">
-                  {(dest.recentReviews?.length > 0 ? dest.recentReviews : MOCK_REVIEWS).map((review: any, i: number) => (
-                    <div key={i} className="p-4 rounded-xl bg-bg-card border border-border-subtle shadow-sm">
-                      <div className="flex items-start justify-between mb-2">
-                        <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold bg-gradient-to-br from-teal-500 to-violet-500">
-                            {(review.userName || review.name || '?')[0]}
-                          </div>
-                          <div>
-                            <p className="font-semibold text-sm text-text-primary">{review.userName || review.name}</p>
-                            <p className="text-xs text-text-muted">{review.createdAt || review.date}</p>
-                          </div>
-                        </div>
-                        <div className={`px-2 py-1 rounded flex items-center gap-1 text-[10px] font-bold ${review.sentimentLabel === 'Positive' || review.sentiment === 'Positive' ? 'bg-green-50 text-green-600' : 'bg-[var(--bg-card)] text-[var(--text-muted)]'}`}>
-                          {(review.sentimentLabel === 'Positive' || review.sentiment === 'Positive') && <Star size={10} className="fill-green-600" />}
-                          AI SCORE: {review.score ?? 85}%
-                        </div>
-                      </div>
-                      <p className="text-sm text-text-secondary mt-2">"{review.comment || review.text}"</p>
-                    </div>
-                  ))}
-                </div>
-              )}
             </motion.div>
           </AnimatePresence>
         </div>

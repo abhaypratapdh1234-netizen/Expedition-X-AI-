@@ -28,6 +28,8 @@ export interface Trip {
   spent: number
   collaborators: number
   itinerary?: DayPlan[]
+  isFavorite?: boolean
+  createdAt?: string
 }
 
 export const tripService = {
@@ -48,6 +50,64 @@ export const tripService = {
           budget: 45000,
           spent: 15000,
           collaborators: 1,
+          isFavorite: false,
+          createdAt: '2026-09-01T10:00:00.000Z'
+        },
+        {
+          id: 't2',
+          title: 'Kyoto Sakura Walk',
+          destinations: ['Kyoto', 'Osaka', 'Nara'],
+          coverImage: 'https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?q=80&w=2070&auto=format&fit=crop',
+          startDate: '2026-10-15',
+          endDate: '2026-10-25',
+          status: 'upcoming',
+          budget: 120000,
+          spent: 42000,
+          collaborators: 4,
+          isFavorite: true,
+          createdAt: '2026-09-05T12:00:00.000Z'
+        },
+        {
+          id: 't3',
+          title: 'Swiss Alps Hiking Expedition',
+          destinations: ['Zermatt', 'Interlaken', 'Lucerne'],
+          coverImage: 'https://images.unsplash.com/photo-1530122037265-a5f1f91d3b99?q=80&w=2070&auto=format&fit=crop',
+          startDate: '2026-09-25',
+          endDate: '2026-10-05',
+          status: 'live',
+          budget: 180000,
+          spent: 95000,
+          collaborators: 2,
+          isFavorite: false,
+          createdAt: '2026-08-20T09:00:00.000Z'
+        },
+        {
+          id: 't4',
+          title: 'Amalfi Coast Dream',
+          destinations: ['Positano', 'Amalfi', 'Ravello'],
+          coverImage: 'https://images.unsplash.com/photo-1613395877344-13d4a8e0d49e?q=80&w=2070&auto=format&fit=crop',
+          startDate: '2026-06-10',
+          endDate: '2026-06-18',
+          status: 'past',
+          budget: 65000,
+          spent: 62000,
+          collaborators: 2,
+          isFavorite: true,
+          createdAt: '2026-06-01T15:00:00.000Z'
+        },
+        {
+          id: 't5',
+          title: 'Bali Tropical Escape',
+          destinations: ['Ubud', 'Seminyak', 'Nusa Penida'],
+          coverImage: 'https://images.unsplash.com/photo-1537996194471-e657df975ab4?q=80&w=2038&auto=format&fit=crop',
+          startDate: '2026-11-01',
+          endDate: '2026-11-15',
+          status: 'draft',
+          budget: 100000,
+          spent: 0,
+          collaborators: 5,
+          isFavorite: false,
+          createdAt: '2026-09-10T11:00:00.000Z'
         }
       ] as Trip[]
     }

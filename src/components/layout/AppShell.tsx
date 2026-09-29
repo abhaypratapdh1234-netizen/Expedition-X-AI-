@@ -1,14 +1,15 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import { Outlet, useLocation, Navigate } from 'react-router-dom'
-import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
+import { AnimatePresence, motion } from 'framer-motion'
 import { Sidebar } from './Sidebar'
 import { Topbar } from './Topbar'
 import { MobileNav } from './MobileNav'
-import { AIFloatingWidget } from '../ai/AIFloatingWidget'
+import { JotformAgentWidget } from '../ai/JotformAgentWidget'
+
 
 import { useAuthStore } from '../../stores/authStore'
 import { useThemeStore } from '../../stores/themeStore'
-import { easeReveal, easeExit, durations } from '../../motion/tokens'
+import { durations } from '../../motion/tokens'
 
 export function AppShell() {
   const { user, isAuthenticated, isOnboarded } = useAuthStore()
@@ -16,20 +17,12 @@ export function AppShell() {
   const location = useLocation()
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false)
-  const prefersReduced = useReducedMotion()
-
-  // Track navigation direction (+1 forward, -1 back)
-  const historyIndexRef = useRef(window.history.state?.idx ?? 0)
-  const [direction, setDirection] = useState(1)
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme)
   }, [theme])
 
   useEffect(() => {
-    const currentIdx = window.history.state?.idx ?? 0
-    setDirection(currentIdx >= historyIndexRef.current ? 1 : -1)
-    historyIndexRef.current = currentIdx
     setMobileSidebarOpen(false)
   }, [location.pathname])
 
@@ -37,19 +30,6 @@ export function AppShell() {
   if (!isOnboarded && location.pathname !== '/app/onboarding') {
     return <Navigate to="/app/onboarding" replace />
   }
-
-  // Direction-aware page transition variants
-  const pageVariants = prefersReduced
-    ? {
-        initial: { opacity: 0 },
-        animate: { opacity: 1, transition: { duration: durations.base, ease: easeReveal } },
-        exit: { opacity: 0, transition: { duration: durations.fast, ease: easeExit } },
-      }
-    : {
-        initial: { opacity: 0, x: direction * 12 },
-        animate: { opacity: 1, x: 0, transition: { duration: durations.base, ease: easeReveal } },
-        exit: { opacity: 0, x: direction * -12, transition: { duration: durations.fast, ease: easeExit } },
-      }
 
   return (
     <div
@@ -113,7 +93,7 @@ export function AppShell() {
           user={user}
         />
 
-        {/* Content area — direction-aware cross-fade + 12px X slide */}
+        {/* Content area */}
         <main
           className="flex-1 overflow-auto"
           style={{
@@ -121,19 +101,7 @@ export function AppShell() {
             minHeight: '100vh',
           }}
         >
-          <AnimatePresence mode="wait" custom={direction}>
-            <motion.div
-              key={location.pathname}
-              custom={direction}
-              variants={pageVariants}
-              initial="initial"
-              animate="animate"
-              exit="exit"
-              className="h-full"
-            >
-              <Outlet />
-            </motion.div>
-          </AnimatePresence>
+          <Outlet />
         </main>
 
         {/* Mobile Bottom Navigation */}
@@ -141,8 +109,8 @@ export function AppShell() {
           <MobileNav />
         </div>
 
-        {/* Floating AI Assistant Widget */}
-        <AIFloatingWidget />
+        {/* JotForm AI Chatbot Agent */}
+        <JotformAgentWidget />
       </div>
 
 
