@@ -8,6 +8,9 @@ import { springSoft, easeExit, springSnappy } from '../../../motion/tokens'
 import axios from 'axios'
 import { DeadZoneNavigator } from '../../../components/planner/DeadZoneNavigator'
 
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api/v1'
+const FLASK_API_URL = import.meta.env.VITE_FLASK_API_URL || 'http://localhost:5000'
+
 // Leaflet imports via dynamic import (ESM compatible)
 let MapContainer: any, TileLayer: any, Marker: any, Popup: any, Polyline: any, CircleMarker: any, L: any
 
@@ -45,7 +48,7 @@ export function MapGuide() {
   useEffect(() => {
     // Only auto-locate if it's a fresh map session without explicit coords
     if (!latParam && !lngParam && !nameParam) {
-      axios.get('http://localhost:8080/api/v1/geo/locate')
+      axios.get(`${API_BASE_URL}/geo/locate`)
         .then(res => {
           if (res.status === 200 && res.data && res.data.latitude && res.data.longitude) {
             setAutoLocateInfo({ city: res.data.city, country: res.data.country_name })
@@ -86,7 +89,7 @@ export function MapGuide() {
           setSearchParams({ lat: lat.toString(), lng: lng.toString(), name: nameParam })
         }
       } else {
-        axios.get(`http://localhost:5000/api/maps/search?q=${encodeURIComponent(nameParam)}`)
+        axios.get(`${FLASK_API_URL}/api/maps/search?q=${encodeURIComponent(nameParam)}`)
           .then(response => {
             if (active && response.data && response.data.success && response.data.data.length > 0) {
               const result = response.data.data[0]
@@ -244,7 +247,7 @@ export function MapGuide() {
     if (e.key === 'Enter' && searchQuery.trim()) {
       setIsLoadingPOIs(true)
       try {
-        const response = await axios.get(`http://localhost:5000/api/maps/search?q=${encodeURIComponent(searchQuery.trim())}`)
+        const response = await axios.get(`${FLASK_API_URL}/api/maps/search?q=${encodeURIComponent(searchQuery.trim())}`)
         if (response.data && response.data.success && response.data.data.length > 0) {
           const result = response.data.data[0]
           const newLat = parseFloat(result.lat)

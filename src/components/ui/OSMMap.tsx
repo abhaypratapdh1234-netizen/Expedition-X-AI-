@@ -2,6 +2,8 @@ import { useEffect, useState, useRef } from 'react'
 import { AlertCircle, Navigation } from 'lucide-react'
 import axios from 'axios'
 
+const FLASK_API_URL = import.meta.env.VITE_FLASK_API_URL || 'http://localhost:5000'
+
 // Dynamic Leaflet wrappers to prevent Node/Vitest build crashes
 let MapContainer: any, TileLayer: any, Marker: any, Popup: any, Polyline: any, CircleMarker: any, L: any
 
@@ -107,7 +109,7 @@ export function OSMMap({
 
     const fetchPOIs = async (type: string, setter: (data: any[]) => void) => {
       try {
-        const res = await axios.get(`http://localhost:5000/api/maps/pois?lat=${lat}&lon=${lon}&radius=4000&type=${type}`)
+        const res = await axios.get(`${FLASK_API_URL}/api/maps/pois?lat=${lat}&lon=${lon}&radius=4000&type=${type}`)
         if (res.data && res.data.success) {
           setter(res.data.data)
         }
@@ -131,7 +133,7 @@ export function OSMMap({
         const [sLat, sLon] = routePoints[0]
         const [eLat, eLon] = routePoints[routePoints.length - 1]
         try {
-          const res = await axios.get(`http://localhost:5000/api/maps/route?start_lat=${sLat}&start_lon=${sLon}&end_lat=${eLat}&end_lon=${eLon}`)
+          const res = await axios.get(`${FLASK_API_URL}/api/maps/route?start_lat=${sLat}&start_lon=${sLon}&end_lat=${eLat}&end_lon=${eLon}`)
           if (res.data && res.data.success) {
             const geom = res.data.data.routes[0].geometry.coordinates
             // OSRM returns coordinates as [lon, lat], map expects [lat, lon]

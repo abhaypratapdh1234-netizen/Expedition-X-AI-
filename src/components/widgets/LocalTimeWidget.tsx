@@ -4,6 +4,8 @@ import axios from 'axios';
 import { Clock } from 'lucide-react';
 import { easeReveal, durations } from '../../motion/tokens';
 
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080/api/v1';
+
 interface LocalTimeWidgetProps {
   placeId: string | number;
 }
@@ -19,7 +21,7 @@ export function LocalTimeWidget({ placeId }: LocalTimeWidgetProps) {
     
     const fetchTimezone = async () => {
       try {
-        const res = await axios.get(`http://localhost:8080/api/v1/places/${placeId}/timezone`);
+        const res = await axios.get(`${API_BASE_URL}/places/${placeId}/timezone`);
         if (res.data && res.data.status === 'OK') {
           setTimeData(res.data);
           const initialTime = new Date(res.data.formatted);

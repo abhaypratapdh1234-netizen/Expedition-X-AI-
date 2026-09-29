@@ -4,9 +4,9 @@
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Download, CheckCircle, Lock, MapPin, Shield, Cloud, Package, ArrowLeft, Sparkles } from 'lucide-react'
-import { buildOfflinePack, sealTimeCapsule, getTimeCapsule } from '../../../services/plannerFeatures'
-import { usePlannerStore } from '../../../stores/plannerStore'
-import { TimeCapsuleCard } from '../../../components/planner/TimeCapsuleCard'
+import { buildOfflinePack, sealTimeCapsule, getTimeCapsule } from '../../../../services/plannerFeatures'
+import { usePlannerStore } from '../../../../stores/plannerStore'
+import { TimeCapsuleCard } from '../../../../components/planner/TimeCapsuleCard'
 
 export function Step6Review() {
   const { session, routeSegments, packingList, offlinePackProgress, setOfflinePackProgress, timeCapsule, setTimeCapsule, setStep, resetSession } = usePlannerStore()

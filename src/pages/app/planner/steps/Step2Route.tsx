@@ -4,10 +4,10 @@
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Plus, Minus, Users, Zap, Map as MapIcon, ArrowRight, Info } from 'lucide-react'
-import { computeRouteRisk, computeEnergyForDay, getDemoGroupMembers } from '../../../services/plannerFeatures'
-import { usePlannerStore } from '../../../stores/plannerStore'
-import { RiskOverlay } from '../../../components/planner/RiskOverlay'
-import { EnergyBar } from '../../../components/planner/EnergyBar'
+import { computeRouteRisk, computeEnergyForDay, getDemoGroupMembers } from '../../../../services/plannerFeatures'
+import { usePlannerStore } from '../../../../stores/plannerStore'
+import { RiskOverlay } from '../../../../components/planner/RiskOverlay'
+import { EnergyBar } from '../../../../components/planner/EnergyBar'
 
 const ACTIVITY_PRESETS = [
   { id: 'a1', name: 'Temple Visit', type: 'temple_visit', durationHours: 2, elevationGainM: 0 },

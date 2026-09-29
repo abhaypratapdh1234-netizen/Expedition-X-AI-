@@ -5,6 +5,8 @@ import { ArrowLeft, Send, Check, Mail, Lock, Key } from 'lucide-react'
 import axios from 'axios'
 import { useThemeStore } from '../../stores/themeStore'
 
+const FLASK_API_URL = import.meta.env.VITE_FLASK_API_URL || 'http://localhost:5000'
+
 export function ForgotPasswordPage() {
   const { theme } = useThemeStore()
   const isDark = theme === 'dark'
@@ -22,7 +24,7 @@ export function ForgotPasswordPage() {
         return
       }
       
-      const response = await axios.post('http://localhost:5000/api/auth/forgot-password', { email })
+      const response = await axios.post(`${FLASK_API_URL}/api/auth/forgot-password`, { email })
       if (response.data.success) {
         setStep('otp')
       } else {
@@ -118,7 +120,7 @@ export function ForgotPasswordPage() {
                       return
                     }
 
-                    const response = await axios.post('http://localhost:5000/api/auth/verify-otp', { email, otp: otpCode })
+                    const response = await axios.post(`${FLASK_API_URL}/api/auth/verify-otp`, { email, otp: otpCode })
                     if (response.data.success) {
                       setStep('reset')
                     } else {
@@ -161,7 +163,7 @@ export function ForgotPasswordPage() {
                      setLoading(true)
                      const newPassword = (document.getElementById('new-password') as HTMLInputElement).value
                      
-                     const response = await axios.post('http://localhost:5000/api/auth/reset-password', { email, newPassword })
+                     const response = await axios.post(`${FLASK_API_URL}/api/auth/reset-password`, { email, newPassword })
                      if (response.data.success) {
                        localStorage.setItem(`expedition_pass_${email}`, newPassword)
                        setStep('done')

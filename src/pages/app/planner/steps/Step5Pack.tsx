@@ -5,9 +5,9 @@
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { Check, Package, RotateCcw, ArrowRight, Info } from 'lucide-react'
-import { computePackingList, type PackingItem } from '../../../services/plannerFeatures'
-import { usePlannerStore } from '../../../stores/plannerStore'
-import { BackpackVisualizer } from '../../../components/planner/BackpackVisualizer'
+import { computePackingList, type PackingItem } from '../../../../services/plannerFeatures'
+import { usePlannerStore } from '../../../../stores/plannerStore'
+import { BackpackVisualizer } from '../../../../components/planner/BackpackVisualizer'
 
 const BAG_SIZES = [
   { label: '20L Day Pack', value: 20 },

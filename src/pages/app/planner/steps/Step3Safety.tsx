@@ -4,12 +4,12 @@
 import { useState, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { AlertTriangle, CloudSun, Shield, Plus, ArrowRight } from 'lucide-react'
-import { getScamWarnings, submitScamReport, getEmergencyEscape } from '../../../services/plannerFeatures'
-import { fetchWeatherByCity, type DayForecast } from '../../../services/openMeteoApi'
-import { usePlannerStore } from '../../../stores/plannerStore'
-import { ScamCard } from '../../../components/planner/ScamCard'
-import { WeatherBackupCard } from '../../../components/planner/WeatherBackupCard'
-import { SOSButton } from '../../../components/planner/SOSButton'
+import { getScamWarnings, submitScamReport, getEmergencyEscape } from '../../../../services/plannerFeatures'
+import { fetchWeatherByCity, type DayForecast } from '../../../../services/openMeteoApi'
+import { usePlannerStore } from '../../../../stores/plannerStore'
+import { ScamCard } from '../../../../components/planner/ScamCard'
+import { WeatherBackupCard } from '../../../../components/planner/WeatherBackupCard'
+import { SOSButton } from '../../../../components/planner/SOSButton'
 
 export function Step3Safety() {
   const { session, scamWarnings, setScamWarnings, addScamWarning, setStep, completeStep } = usePlannerStore()

@@ -8,8 +8,8 @@ import {
   findHiddenPlaces, getCrowdDensity, submitCrowdReport, findSilentZones,
   getFoodSafetyRatings, getChallenges,
   type HiddenPlace, type CrowdReport, type SilentZone, type FoodSafetyRating, type Challenge,
-} from '../../../services/plannerFeatures'
-import { usePlannerStore } from '../../../stores/plannerStore'
+} from '../../../../services/plannerFeatures'
+import { usePlannerStore } from '../../../../stores/plannerStore'
 
 const CROWD_COLOR = { quiet: '#22c55e', moderate: '#f59e0b', busy: '#ef4444' }
 
