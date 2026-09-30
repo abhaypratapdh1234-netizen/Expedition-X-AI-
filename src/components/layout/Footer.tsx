@@ -1,10 +1,11 @@
-import { Link, useNavigate } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { Compass, ExternalLink, MessageCircle, Globe, Code } from 'lucide-react'
 import { useAuthStore } from '../../stores/authStore'
 
 export function Footer() {
-  const navigate = useNavigate()
-  const logout = useAuthStore(s => s.logout)
+  const { isAuthenticated, user } = useAuthStore()
+  const isLoggedIn = Boolean(isAuthenticated && user && user.id !== 'guest_explorer')
+
   return (
     <footer className="bg-[var(--bg-primary)] text-[#000000] font-sans relative overflow-hidden z-20" style={{ borderTop: '1px solid rgba(0,0,0,0.1)' }}>
       {/* 8K Ambient Glows - kept very subtle to enhance vanilla without ruining it */}
@@ -59,19 +60,19 @@ export function Footer() {
                 { label: 'AI Assistant', to: '/app/assistant' },
                 { label: 'Travel Toolkit', to: '/app/toolkit/packing' },
                 { label: 'Rewards Program', to: '/app/rewards' }
-              ].map((item) => (
-                <li key={item.label}>
-                  <div
-                    onClick={() => {
-                      logout()
-                      navigate(`/login?returnTo=${encodeURIComponent(item.to)}`)
-                    }}
-                    className="text-[17px] font-semibold transition-all duration-300 hover:text-[#FC6C26] hover:translate-x-2 cursor-pointer text-[var(--text-secondary)] inline-block tracking-normal"
-                  >
-                    {item.label}
-                  </div>
-                </li>
-              ))}
+              ].map((item) => {
+                const targetUrl = isLoggedIn ? item.to : `/login?returnTo=${encodeURIComponent(item.to)}`
+                return (
+                  <li key={item.label}>
+                    <Link
+                      to={targetUrl}
+                      className="text-[17px] font-semibold transition-all duration-300 hover:text-[#FC6C26] hover:translate-x-2 cursor-pointer text-[var(--text-secondary)] inline-block tracking-normal"
+                    >
+                      {item.label}
+                    </Link>
+                  </li>
+                )
+              })}
             </ul>
           </div>
 

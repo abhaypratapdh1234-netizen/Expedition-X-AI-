@@ -1,8 +1,8 @@
 import React from 'react'
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { useAuthStore } from './stores/authStore'
 
-import { Suspense, lazy, Component, type ErrorInfo, type ReactNode } from 'react'
+import { Suspense, lazy, Component, useEffect, type ErrorInfo, type ReactNode } from 'react'
 import { NotFoundPage, ServerErrorPage } from './pages/error/NotFoundPage'
 
 class ErrorBoundary extends Component<{children: ReactNode}, {hasError: boolean, error: Error | null}> {
@@ -90,8 +90,22 @@ const OfflinePage = lazy(() => import('./pages/error/OfflinePage').then(module =
 const InviteJoinPage = lazy(() => import('./pages/InviteJoinPage'))
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
-  const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
-  return isAuthenticated ? <>{children}</> : <Navigate to="/login" replace />
+  const { isAuthenticated, user, logout } = useAuthStore()
+  const location = useLocation()
+
+  // Invalidate any legacy guest mock
+  if (user?.id === 'guest_explorer') {
+    logout()
+    const targetUrl = location.pathname + location.search + location.hash
+    return <Navigate to={`/login?returnTo=${encodeURIComponent(targetUrl)}`} replace />
+  }
+
+  if (!isAuthenticated || !user) {
+    const targetUrl = location.pathname + location.search + location.hash
+    return <Navigate to={`/login?returnTo=${encodeURIComponent(targetUrl)}`} replace />
+  }
+
+  return <>{children}</>
 }
 
 function AdminRoute({ children }: { children: React.ReactNode }) {

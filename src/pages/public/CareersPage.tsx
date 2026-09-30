@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Briefcase, MapPin, Users, Zap, Code, Heart, X, Upload, CheckCircle2 } from 'lucide-react';
+import { Briefcase, Users, Zap, Code, Heart, X, Upload, CheckCircle2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export function CareersPage() {
@@ -72,7 +72,6 @@ export function CareersPage() {
                 </h3>
                 <div className="flex flex-wrap items-center gap-6 text-[17px] font-bold font-display text-[var(--text-primary)]">
                   <span className="flex items-center gap-2"><Code size={18} className="text-[#FC6C26]"/> {job.department}</span>
-                  <span className="flex items-center gap-2"><MapPin size={18} className="text-[#FC6C26]"/> {job.location}</span>
                   <span className="px-3 py-1 rounded-md bg-gray-100 text-[#000000]">{job.type}</span>
                 </div>
               </div>
@@ -151,11 +150,11 @@ export function CareersPage() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                       <div className="space-y-3">
                         <label className="text-[18px] font-bold font-display text-[#000000] uppercase tracking-wide">Full Name</label>
-                        <input required type="text" placeholder="JANE DOE" className="w-full px-6 py-5 rounded-2xl bg-[var(--bg-card)] border-4 border-[#000000]/10 focus:border-[#000000] transition-all outline-none text-[20px] font-bold font-display text-[#000000] placeholder:text-[#000000]/30 shadow-sm" />
+                        <input required type="text" placeholder="ANANT AMBANI" className="w-full px-6 py-5 rounded-2xl bg-[var(--bg-card)] border-4 border-[#000000]/10 focus:border-[#000000] transition-all outline-none text-[20px] font-bold font-display text-[#000000] placeholder:text-[#000000]/30 shadow-sm" />
                       </div>
                       <div className="space-y-3">
                         <label className="text-[18px] font-bold font-display text-[#000000] uppercase tracking-wide">Email Address</label>
-                        <input required type="email" placeholder="JANE@EXAMPLE.COM" className="w-full px-6 py-5 rounded-2xl bg-[var(--bg-card)] border-4 border-[#000000]/10 focus:border-[#000000] transition-all outline-none text-[20px] font-bold font-display text-[#000000] placeholder:text-[#000000]/30 shadow-sm" />
+                        <input required type="email" placeholder="ANANTAMBANI@GMAIL.COM" className="w-full px-6 py-5 rounded-2xl bg-[var(--bg-card)] border-4 border-[#000000]/10 focus:border-[#000000] transition-all outline-none text-[20px] font-bold font-display text-[#000000] placeholder:text-[#000000]/30 shadow-sm" />
                       </div>
                     </div>
 

@@ -3,7 +3,6 @@ import { motion, useInView, useReducedMotion } from 'framer-motion'
 import { Link, useNavigate } from 'react-router-dom'
 import { Play, Heart, Send } from 'lucide-react'
 import { DESTINATIONS } from '../../data/mockData'
-import { useAuthStore } from '../../stores/authStore'
 import BoomerangVideoBg from '../../components/BoomerangVideoBg'
 import { GlowingEffect } from '@/components/ui/glowing-effect'
 
@@ -38,7 +37,6 @@ function MailIcon(props: any) {
 
 export function LandingPage() {
   const navigate = useNavigate()
-  const { logout } = useAuthStore()
 
   const HOW_IT_WORKS = [
     { step: '01', icon: '🔍', title: 'Search Any Destination', desc: 'Type a city or landmark. Our AI instantly surfaces tourist spots, cost estimates, and nearby hotels.', color: '#F1A501' },
@@ -209,8 +207,7 @@ export function LandingPage() {
                 <div 
                   className="relative h-full bg-[var(--bg-card)] rounded-[24px] p-2 shadow-[0_20px_40px_-10px_rgba(0,0,0,0.05)] overflow-hidden"
                   onClick={() => {
-                    logout()
-                    navigate(`/login?returnTo=${encodeURIComponent(`/app/explore/search?q=${dest.name}`)}`)
+                    navigate(`/app/explore/search?q=${encodeURIComponent(dest.name)}`)
                   }}
                 >
                   <div className="h-[340px] rounded-[16px] overflow-hidden relative">
@@ -358,12 +355,7 @@ export function LandingPage() {
         </div>
       </section>
 
-      {/* ── LOGOS ── */}
-      <section className="py-24 px-6 max-w-[1000px] mx-auto flex flex-wrap justify-center gap-16 sm:gap-24 items-center">
-        {['AXON', 'Jetstar', 'Expedia', 'Qantas', 'Alitalia'].map(brand => (
-          <span key={brand} className="text-3xl font-black text-[var(--text-primary)] tracking-tighter opacity-60 hover:opacity-100 hover:scale-110 transition-all duration-300 cursor-default">{brand}</span>
-        ))}
-      </section>
+
 
       {/* ── NEWSLETTER SECTION ── */}
       <section className="py-32 px-6 max-w-[1400px] mx-auto mb-20 relative z-10">

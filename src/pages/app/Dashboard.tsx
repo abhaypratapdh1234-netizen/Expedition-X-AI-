@@ -148,7 +148,7 @@ export function Dashboard() {
 
   const handleSendChat = async (presetText?: string) => {
     const textToSend = presetText || chatInput.trim()
-    if(!textToSend) return
+    if(!textToSend || chatLoading) return
     setChatInput('')
     
     const now = new Date()
@@ -401,19 +401,75 @@ export function Dashboard() {
                     ))}
                     </AnimatePresence>
                     {chatLoading && (
-                      <div className="flex justify-start">
-                         <div 
-                           className="p-4 rounded-[20px] rounded-bl-sm border flex items-center gap-1.5 shadow-sm"
-                           style={{
-                             background: isDark ? '#18181B' : isMonochrome ? '#161616' : 'var(--bg-card)',
-                             borderColor: isDark ? '#27272A' : isMonochrome ? '#2E2E2E' : 'var(--border-subtle)'
-                           }}
-                         >
-                           <motion.div className="w-1.5 h-1.5 rounded-full bg-[#FC6C26]" animate={{ y: [0, -4, 0] }} transition={{ repeat: Infinity, duration: 0.6 }} />
-                           <motion.div className="w-1.5 h-1.5 rounded-full bg-[#FC6C26]" animate={{ y: [0, -4, 0] }} transition={{ repeat: Infinity, duration: 0.6, delay: 0.2 }} />
-                           <motion.div className="w-1.5 h-1.5 rounded-full bg-[#FC6C26]" animate={{ y: [0, -4, 0] }} transition={{ repeat: Infinity, duration: 0.6, delay: 0.4 }} />
-                         </div>
-                      </div>
+                      <motion.div 
+                        initial={{ opacity: 0, y: 12, scale: 0.96 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.95, transition: { duration: 0.2 } }}
+                        transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+                        className="flex justify-start w-full"
+                      >
+                        <div 
+                          className="px-4 py-3 rounded-[22px] rounded-bl-sm border flex items-center gap-3 shadow-md backdrop-blur-md"
+                          style={{
+                            background: isDark ? '#14161F' : isMonochrome ? '#161616' : 'var(--bg-card)',
+                            borderColor: isDark ? '#262938' : isMonochrome ? '#2e2e2e' : 'rgba(252, 108, 38, 0.25)',
+                            boxShadow: isDark
+                              ? '0 8px 24px rgba(0,0,0,0.35)'
+                              : '0 8px 24px rgba(252,108,38,0.1)'
+                          }}
+                        >
+                          {/* Animated Concierge Bot Badge */}
+                          <div 
+                            className="w-8 h-8 rounded-xl flex items-center justify-center relative overflow-hidden shrink-0 shadow-sm"
+                            style={{
+                              background: isMonochrome
+                                ? '#262626'
+                                : 'linear-gradient(135deg, #FC6C26 0%, #FF8A48 100%)',
+                            }}
+                          >
+                            <Bot size={16} className="text-white relative z-10 animate-bounce" style={{ animationDuration: '1.2s' }} />
+                            <div className="absolute inset-0 bg-white/20 animate-pulse pointer-events-none" />
+                          </div>
+
+                          {/* Thinking Text & Bouncing Dots */}
+                          <div className="flex flex-col pr-1">
+                            <div className="flex items-center gap-2">
+                              <span 
+                                className="text-[13px] font-bold tracking-tight"
+                                style={{ color: isDark || isMonochrome ? '#ffffff' : 'var(--text-primary)' }}
+                              >
+                                Max AI is thinking
+                              </span>
+                              <div className="flex items-center gap-1">
+                                <motion.span 
+                                  className="w-1.5 h-1.5 rounded-full"
+                                  style={{ background: isMonochrome ? '#ffffff' : '#FC6C26' }}
+                                  animate={{ y: [0, -5, 0], opacity: [0.35, 1, 0.35] }} 
+                                  transition={{ repeat: Infinity, duration: 0.75, ease: 'easeInOut' }} 
+                                />
+                                <motion.span 
+                                  className="w-1.5 h-1.5 rounded-full"
+                                  style={{ background: isMonochrome ? '#ffffff' : '#FC6C26' }}
+                                  animate={{ y: [0, -5, 0], opacity: [0.35, 1, 0.35] }} 
+                                  transition={{ repeat: Infinity, duration: 0.75, delay: 0.18, ease: 'easeInOut' }} 
+                                />
+                                <motion.span 
+                                  className="w-1.5 h-1.5 rounded-full"
+                                  style={{ background: isMonochrome ? '#ffffff' : '#FC6C26' }}
+                                  animate={{ y: [0, -5, 0], opacity: [0.35, 1, 0.35] }} 
+                                  transition={{ repeat: Infinity, duration: 0.75, delay: 0.36, ease: 'easeInOut' }} 
+                                />
+                              </div>
+                            </div>
+                            <span 
+                              className="text-[10px] font-semibold tracking-wider uppercase mt-0.5"
+                              style={{ color: isDark ? '#71717A' : isMonochrome ? '#888' : '#8E8E93' }}
+                            >
+                              Concierge analyzing request...
+                            </span>
+                          </div>
+                        </div>
+                      </motion.div>
                     )}
                     <div ref={chatEndRef} />
                   </div>
@@ -431,7 +487,8 @@ export function Dashboard() {
                     <div className="flex items-center gap-2 overflow-x-auto custom-scrollbar pb-1">
                       <button 
                         onClick={() => handleSendChat('Suggest local attractions 🏰')}
-                        className="whitespace-nowrap px-4 py-2 rounded-full text-sm font-semibold transition-all shrink-0 border cursor-pointer hover:border-[#FC6C26]"
+                        disabled={chatLoading}
+                        className="whitespace-nowrap px-4 py-2 rounded-full text-sm font-semibold transition-all shrink-0 border cursor-pointer hover:border-[#FC6C26] disabled:opacity-50 disabled:cursor-not-allowed"
                         style={{
                           background: isDark ? '#18181B' : isMonochrome ? '#141414' : 'var(--bg-primary)',
                           color: isDark || isMonochrome ? '#ffffff' : 'var(--text-primary)',
@@ -442,7 +499,8 @@ export function Dashboard() {
                       </button>
                       <button 
                         onClick={() => handleSendChat('Check weather in Goa 🌴')}
-                        className="whitespace-nowrap px-4 py-2 rounded-full text-sm font-semibold transition-all shrink-0 border cursor-pointer hover:border-[#FC6C26]"
+                        disabled={chatLoading}
+                        className="whitespace-nowrap px-4 py-2 rounded-full text-sm font-semibold transition-all shrink-0 border cursor-pointer hover:border-[#FC6C26] disabled:opacity-50 disabled:cursor-not-allowed"
                         style={{
                           background: isDark ? '#18181B' : isMonochrome ? '#141414' : 'var(--bg-primary)',
                           color: isDark || isMonochrome ? '#ffffff' : 'var(--text-primary)',

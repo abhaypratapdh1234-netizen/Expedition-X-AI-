@@ -50,10 +50,6 @@ export function SupportChat() {
     }, 400)
 
     try {
-      // Small realistic typing delay (600–1200ms), then instant response
-      const delay = 600 + Math.random() * 600
-      await new Promise(resolve => setTimeout(resolve, delay))
-
       const result = await aiService.processChatQuery(userText)
       const replyText = result.response || "I'm here to help! Could you tell me more about what you need? 😊"
 

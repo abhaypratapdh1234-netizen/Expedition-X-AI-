@@ -1,20 +1,150 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Eye, EyeOff, ArrowRight, Compass } from 'lucide-react'
 import { GlowingEffect } from '@/components/ui/glowing-effect'
 import { useAuthStore } from '../../stores/authStore'
+import { GoogleAuthModal } from '../../components/auth/GoogleAuthModal'
+import { getGoogleClientId, isGoogleClientIdConfigured, triggerGoogleOAuth, decodeGoogleJwt, waitForGoogleScript } from '../../services/googleAuth'
+
+const getFeatureName = (path: string): string | null => {
+  if (path.includes('/explore')) return 'Destination Guides'
+  if (path.includes('/planner')) return 'Trip Planner'
+  if (path.includes('/book/hotels') || path.includes('/hotels')) return 'Hotel Booking'
+  if (path.includes('/assistant')) return 'AI Assistant'
+  if (path.includes('/toolkit')) return 'Travel Toolkit'
+  if (path.includes('/rewards')) return 'Rewards Program'
+  if (path.includes('/flights')) return 'Flight Search'
+  if (path.includes('/trips')) return 'My Trips'
+  if (path.includes('/bookings')) return 'My Bookings'
+  if (path.includes('/wishlist')) return 'Wishlist'
+  return null
+}
 
 export function LoginPage() {
   const navigate = useNavigate()
-  const { setUser, setToken } = useAuthStore()
+  const { setUser, setToken, isAuthenticated, user } = useAuthStore()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [showPass, setShowPass] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [googleLoading, setGoogleLoading] = useState(false)
+  const [isGoogleModalOpen, setIsGoogleModalOpen] = useState(false)
   const [error, setError] = useState('')
   const [searchParams] = useSearchParams()
   const returnTo = searchParams.get('returnTo') || '/app/dashboard'
+  const featureName = getFeatureName(returnTo)
+
+  useEffect(() => {
+    if (isAuthenticated && user && user.id !== 'guest_explorer') {
+      navigate(returnTo, { replace: true })
+    }
+  }, [isAuthenticated, user, navigate, returnTo])
+
+  useEffect(() => {
+    const activeClientId = getGoogleClientId()
+    if (!isGoogleClientIdConfigured()) return
+
+    let isMounted = true
+    waitForGoogleScript().then((ready) => {
+      if (!isMounted || !ready || !window.google?.accounts?.id) return
+      try {
+        window.google.accounts.id.initialize({
+          client_id: activeClientId,
+          callback: async (res: { credential: string }) => {
+            if (res.credential) {
+              const profile = decodeGoogleJwt(res.credential)
+              if (profile) {
+                await handleGoogleSuccess({
+                  name: profile.name,
+                  email: profile.email,
+                  avatarUrl: profile.avatarUrl
+                })
+              }
+            }
+          },
+          auto_select: false,
+          cancel_on_tap_outside: true
+        })
+        window.google.accounts.id.prompt()
+      } catch (err) {
+        console.warn('Google One Tap init notice:', err)
+      }
+    })
+
+    return () => {
+      isMounted = false
+      try {
+        window.google?.accounts?.id?.cancel()
+      } catch {
+        // Safe ignore
+      }
+    }
+  }, [])
+
+  const handleGoogleSuccess = async (account: { name: string; email: string; avatarUrl: string }) => {
+    try {
+      setGoogleLoading(true)
+      const { authService } = await import('../../services/authService')
+      const response = await authService.googleAuth({
+        name: account.name,
+        email: account.email,
+        avatarUrl: account.avatarUrl
+      })
+
+      localStorage.setItem('expeditionx_token', response.accessToken)
+      setToken(response.accessToken)
+      
+      setUser({
+        id: response.userId.toString(),
+        name: response.name,
+        email: response.email,
+        role: response.role,
+        explorerLevel: 3, 
+        xp: 1250,
+        avatar: response.avatarUrl
+      })
+
+      setIsGoogleModalOpen(false)
+      navigate(returnTo)
+    } catch (err: any) {
+      setError(err?.message || 'Google sign-in failed. Please try again.')
+    } finally {
+      setGoogleLoading(false)
+    }
+  }
+
+  const handleGoogleClick = async () => {
+    setError('')
+    const activeClientId = getGoogleClientId()
+
+    if (!isGoogleClientIdConfigured()) {
+      setIsGoogleModalOpen(true)
+      return
+    }
+
+    setGoogleLoading(true)
+    try {
+      await triggerGoogleOAuth(
+        activeClientId,
+        async (profile) => {
+          await handleGoogleSuccess({
+            name: profile.name,
+            email: profile.email,
+            avatarUrl: profile.avatarUrl
+          })
+        },
+        (errorMsg) => {
+          setError(errorMsg)
+          setGoogleLoading(false)
+        }
+      )
+    } catch (err: any) {
+      console.warn('OAuth direct launch exception, falling back to modal:', err)
+      setGoogleLoading(false)
+      setIsGoogleModalOpen(true)
+    }
+  }
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -103,6 +233,11 @@ export function LoginPage() {
           <motion.div variants={staggerContainer} initial="hidden" animate="show" className="text-center">
             
             <motion.div variants={itemVariant} className="mb-10">
+              {featureName && (
+                <div className="mb-4 inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#FC6C26]/10 border border-[#FC6C26]/20 text-[#FC6C26] text-xs font-bold shadow-sm">
+                  <span>Sign in required to access <strong>{featureName}</strong></span>
+                </div>
+              )}
               <h2 className="text-4xl font-display font-black tracking-tighter text-[var(--text-primary)] mb-3 drop-shadow-sm">Welcome back</h2>
               <p className="text-[var(--text-secondary)] text-base font-medium tracking-normal">
                 New to ExpeditionX?{' '}
@@ -115,14 +250,21 @@ export function LoginPage() {
             </motion.div>
 
             {/* Social Auth */}
-            <motion.div variants={itemVariant} className="flex gap-4 mb-8">
-              <button className="flex-1 flex items-center justify-center gap-3 py-3.5 rounded-2xl bg-[var(--bg-card)] hover:bg-[var(--bg-card)] border border-[#E5E7EB] transition-all duration-300 group shadow-[0_2px_10px_rgba(0,0,0,0.02)] hover:shadow-[0_8px_20px_rgba(0,0,0,0.06)]">
-                <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google" className="w-5 h-5 group-hover:scale-110 transition-transform" />
-                <span className="text-sm font-extrabold text-[var(--text-primary)]">Google</span>
-              </button>
-              <button className="flex-1 flex items-center justify-center gap-3 py-3.5 rounded-2xl bg-[var(--bg-card)] hover:bg-[var(--bg-card)] border border-[#E5E7EB] transition-all duration-300 group shadow-[0_2px_10px_rgba(0,0,0,0.02)] hover:shadow-[0_8px_20px_rgba(0,0,0,0.06)]">
-                <img src="https://www.svgrepo.com/show/512399/apple-173.svg" alt="Apple" className="w-5 h-5 group-hover:scale-110 transition-transform" />
-                <span className="text-sm font-extrabold text-[var(--text-primary)]">Apple</span>
+            <motion.div variants={itemVariant} className="mb-8">
+              <button
+                type="button"
+                onClick={handleGoogleClick}
+                disabled={googleLoading}
+                className="w-full flex items-center justify-center gap-3 py-3.5 rounded-2xl bg-[var(--bg-card)] hover:bg-[var(--bg-card)] border border-[#E5E7EB] hover:border-[#FC6C26]/40 transition-all duration-300 group shadow-[0_2px_10px_rgba(0,0,0,0.02)] hover:shadow-[0_8px_20px_rgba(0,0,0,0.06)] cursor-pointer disabled:opacity-70"
+              >
+                {googleLoading ? (
+                  <div className="w-5 h-5 border-2 border-[#FC6C26] border-t-transparent rounded-full animate-spin" />
+                ) : (
+                  <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google" className="w-5 h-5 group-hover:scale-110 transition-transform" />
+                )}
+                <span className="text-sm font-extrabold text-[var(--text-primary)]">
+                  {googleLoading ? 'Signing in with Google...' : 'Continue with Google'}
+                </span>
               </button>
             </motion.div>
 
@@ -156,7 +298,7 @@ export function LoginPage() {
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    placeholder="you@example.com"
+                    placeholder="anantambani@gmail.com"
                     required
                     className="w-full bg-[var(--bg-card)]/80 backdrop-blur-md border border-[#E5E7EB] rounded-[20px] px-5 py-4 text-base outline-none text-[var(--text-primary)] placeholder-[#9CA3AF] transition-all focus:bg-[var(--bg-card)] focus:border-[#FC6C26] focus:ring-4 focus:ring-[#FC6C26]/10 shadow-[0_4px_20px_rgba(0,0,0,0.03)] font-medium"
                   />
@@ -219,6 +361,13 @@ export function LoginPage() {
         </motion.div>
         </div>
       </div>
+
+      <GoogleAuthModal
+        isOpen={isGoogleModalOpen}
+        onClose={() => setIsGoogleModalOpen(false)}
+        onSuccess={handleGoogleSuccess}
+        mode="login"
+      />
     </div>
   )
 }

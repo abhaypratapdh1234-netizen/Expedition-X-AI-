@@ -1,8 +1,26 @@
-import React from 'react';
-import { Newspaper, Download, PlayCircle } from 'lucide-react';
+import React, { useState } from 'react';
+import { Newspaper, Download, PlayCircle, Check } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { generateMediaKitPdf } from '../../utils/generateMediaKitPdf';
 
 export function PressPage() {
+  const [downloading, setDownloading] = useState(false);
+  const [downloaded, setDownloaded] = useState(false);
+
+  const handleDownload = async () => {
+    try {
+      setDownloading(true);
+      await new Promise(r => setTimeout(r, 600));
+      generateMediaKitPdf();
+      setDownloaded(true);
+      setTimeout(() => setDownloaded(false), 3000);
+    } catch (err) {
+      console.error('Error generating PDF:', err);
+    } finally {
+      setDownloading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen pt-32 pb-24" style={{ background: 'var(--bg-primary)' }}>
       <div className="max-w-6xl mx-auto px-4 sm:px-6">
@@ -33,8 +51,28 @@ export function PressPage() {
             <p className="mb-10 text-[19px] font-medium font-display leading-[1.8] text-[var(--text-primary)] flex-1">
               Download our official brand assets, including high-res logos, product screenshots, founder headshots, and company fact sheets.
             </p>
-            <button className="inline-flex items-center justify-center gap-3 bg-[#000000] hover:bg-[#FC6C26] text-white px-8 py-4 rounded-full text-[17px] font-bold font-display uppercase tracking-wider transition-colors shadow-md w-full">
-              <Download size={20} /> Download Brand Kit (142 MB)
+            <button 
+              type="button"
+              onClick={handleDownload}
+              disabled={downloading}
+              className="inline-flex items-center justify-center gap-3 bg-[#000000] hover:bg-[#FC6C26] text-white px-8 py-4 rounded-full text-[17px] font-bold font-display uppercase tracking-wider transition-colors shadow-md w-full disabled:opacity-75 cursor-pointer"
+            >
+              {downloading ? (
+                <>
+                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  <span>Preparing Brand Kit PDF...</span>
+                </>
+              ) : downloaded ? (
+                <>
+                  <Check size={20} className="text-emerald-400" />
+                  <span>Brand Kit Downloaded!</span>
+                </>
+              ) : (
+                <>
+                  <Download size={20} />
+                  <span>Download Brand Kit (PDF)</span>
+                </>
+              )}
             </button>
           </motion.div>
 

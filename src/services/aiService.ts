@@ -320,38 +320,47 @@ export const aiService = {
   },
 
   async processChatQuery(query: string) {
-    // 1. Try Gemini API directly (any key format — let the API decide validity)
-    const geminiKey = import.meta.env.VITE_GEMINI_API_KEY
-    if (geminiKey && geminiKey.trim().length > 10) {
-      try {
-        const controller = new AbortController()
-        const timeout = setTimeout(() => controller.abort(), 8000)
-        const res = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiKey}`,
-          {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            signal: controller.signal,
-            body: JSON.stringify({
-              contents: [{ parts: [{ text: `You are ExpeditionX AI, an expert travel concierge for India and global destinations. Answer ONLY the specific question asked — do NOT give generic guides when a specific thing (like weather, food, hotels) is asked. Be accurate, concise, friendly, use emojis and bullet points. User query: ${query}` }] }],
-              generationConfig: { maxOutputTokens: 600, temperature: 0.5 }
-            })
+    // 1 to 2 second realistic thinking delay so user sees typing animation and feels the AI thoughtfully formulating an answer
+    const thinkingDelayMs = 1200 + Math.floor(Math.random() * 600) // between 1.2s and 1.8s
+    const minThinkingTime = new Promise(resolve => setTimeout(resolve, thinkingDelayMs))
+
+    const executeChat = async () => {
+      // 1. Try Gemini API directly (any key format — let the API decide validity)
+      const geminiKey = import.meta.env.VITE_GEMINI_API_KEY
+      if (geminiKey && geminiKey.trim().length > 10) {
+        try {
+          const controller = new AbortController()
+          const timeout = setTimeout(() => controller.abort(), 8000)
+          const res = await fetch(
+            `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiKey}`,
+            {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              signal: controller.signal,
+              body: JSON.stringify({
+                contents: [{ parts: [{ text: `You are ExpeditionX AI, an expert travel concierge for India and global destinations. Answer ONLY the specific question asked — do NOT give generic guides when a specific thing (like weather, food, hotels) is asked. Be accurate, concise, friendly, use emojis and bullet points. User query: ${query}` }] }],
+                generationConfig: { maxOutputTokens: 600, temperature: 0.5 }
+              })
+            }
+          )
+          clearTimeout(timeout)
+          if (res.ok) {
+            const data = await res.json()
+            const aiReply = data?.candidates?.[0]?.content?.parts?.[0]?.text
+            if (aiReply && aiReply.trim().length > 10) {
+              return { intent: 'GEMINI_AI', response: aiReply, cardType: null, cardData: null }
+            }
           }
-        )
-        clearTimeout(timeout)
-        if (res.ok) {
-          const data = await res.json()
-          const aiReply = data?.candidates?.[0]?.content?.parts?.[0]?.text
-          if (aiReply && aiReply.trim().length > 10) {
-            return { intent: 'GEMINI_AI', response: aiReply, cardType: null, cardData: null }
-          }
-        }
-      } catch (_) { /* fall through to smart fallback */ }
+        } catch (_) { /* fall through to smart fallback */ }
+      }
+
+      // 2. Smart intent-aware fallback with real OpenWeatherMap data
+      const response = await smartTravelResponse(query)
+      return { intent: 'SMART_FALLBACK', response, cardType: null, cardData: null }
     }
 
-    // 2. Smart intent-aware fallback with real OpenWeatherMap data
-    const response = await smartTravelResponse(query)
-    return { intent: 'SMART_FALLBACK', response, cardType: null, cardData: null }
+    const [_, result] = await Promise.all([minThinkingTime, executeChat()])
+    return result
   },
 
   async generateSurpriseTrip() {

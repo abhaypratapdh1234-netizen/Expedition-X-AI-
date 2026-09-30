@@ -103,19 +103,83 @@ export function TravelDocuments() {
     persistDocs(updated)
   }
 
-  const handleDownload = (docId: string) => {
+  const handleDownload = async (docId: string) => {
     const doc = docs.find(d => d.id === docId)
     if (!doc || !doc.url) return
+
+    // 1. If document is already PDF
+    if (doc.type === 'application/pdf' || doc.url.startsWith('data:application/pdf')) {
+      const a = document.createElement('a')
+      a.href = doc.url
+      a.download = doc.name.endsWith('.pdf') ? doc.name : `${doc.name.replace(/\s+/g, '_')}.pdf`
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      return
+    }
+
+    // 2. If document is an image, compile into official PDF
+    if (doc.type.startsWith('image/') || doc.url.startsWith('data:image/')) {
+      try {
+        const { jsPDF } = await import('jspdf')
+        const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' })
+        const pageWidth = 210
+        const margin = 15
+
+        // Header
+        pdf.setFillColor(15, 23, 42)
+        pdf.rect(0, 0, pageWidth, 28, 'F')
+        pdf.setFillColor(252, 108, 38)
+        pdf.rect(0, 28, pageWidth, 2, 'F')
+
+        pdf.setFont('helvetica', 'bold')
+        pdf.setFontSize(16)
+        pdf.setTextColor(255, 255, 255)
+        pdf.text('EXPEDITION X AI • TRAVEL VAULT', margin, 14)
+
+        pdf.setFont('helvetica', 'normal')
+        pdf.setFontSize(8.5)
+        pdf.setTextColor(203, 213, 225)
+        pdf.text(`OFFICIAL TRAVELER DOCUMENT: ${doc.name.toUpperCase()}`, margin, 21)
+
+        const img = new Image()
+        img.src = doc.url
+        await new Promise((res, rej) => {
+          img.onload = res
+          img.onerror = rej
+        })
+
+        const maxW = pageWidth - margin * 2
+        const maxH = 210
+        let w = img.width
+        let h = img.height
+        const ratio = Math.min(maxW / w, maxH / h)
+        w = w * ratio
+        h = h * ratio
+        const x = margin + (maxW - w) / 2
+        const y = 42 + (maxH - h) / 2
+
+        pdf.setDrawColor(226, 232, 240)
+        pdf.setFillColor(255, 255, 255)
+        pdf.roundedRect(x - 2, y - 2, w + 4, h + 4, 2, 2, 'FD')
+        pdf.addImage(img, 'JPEG', x, y, w, h, undefined, 'FAST')
+
+        pdf.setFont('helvetica', 'normal')
+        pdf.setTextColor(148, 163, 184)
+        pdf.setFontSize(7.5)
+        pdf.text('Offline-Encrypted Vault Protocol • Persistent Account Storage', pageWidth / 2, 284, { align: 'center' })
+
+        pdf.save(`${doc.name.replace(/\s+/g, '_')}.pdf`)
+        return
+      } catch (err) {
+        console.error('Failed to convert image to PDF, falling back to direct download', err)
+      }
+    }
     
+    // 3. Fallback
     const a = document.createElement('a')
     a.href = doc.url
-    
-    let ext = ''
-    if (doc.type === 'image/jpeg') ext = '.jpg'
-    else if (doc.type === 'image/png') ext = '.png'
-    else if (doc.type === 'application/pdf') ext = '.pdf'
-    
-    a.download = `${doc.name.replace(/\s+/g, '_')}${ext}`
+    a.download = doc.name.endsWith('.pdf') ? doc.name : `${doc.name.replace(/\s+/g, '_')}.pdf`
     document.body.appendChild(a)
     a.click()
     document.body.removeChild(a)

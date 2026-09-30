@@ -64,6 +64,31 @@ export const authService = {
   async logout() {
     await simulateNetworkDelay(400, 800)
     return { success: true }
+  },
+
+  async googleAuth(customData?: { email?: string; name?: string; avatarUrl?: string }) {
+    await simulateNetworkDelay(500, 900)
+    
+    const email = customData?.email?.trim() || 'abhaypratap@gmail.com'
+    const name = customData?.name?.trim() || (email.split('@')[0].replace(/[._]/g, ' ').replace(/\b\w/g, l => l.toUpperCase()))
+    const avatar = customData?.avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${encodeURIComponent(email)}&backgroundColor=b6e3f4`
+
+    // Lifetime persistence in localStorage
+    localStorage.setItem(`expedition_name_${email}`, name)
+    localStorage.setItem(`expedition_avatar_${email}`, avatar)
+    localStorage.setItem(`expedition_provider_${email}`, 'google')
+
+    return {
+      userId: Math.floor(Math.random() * 9000) + 1000,
+      name,
+      email,
+      role: 'user' as const,
+      accessToken: `google_oauth_token_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
+      refreshToken: `google_oauth_refresh_${Date.now()}`,
+      onboardingCompleted: true,
+      avatarUrl: avatar,
+      provider: 'google'
+    }
   }
 }
 

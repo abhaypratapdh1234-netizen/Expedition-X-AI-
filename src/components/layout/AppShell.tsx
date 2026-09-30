@@ -11,6 +11,7 @@ import { RouteTransitionLoader } from './RouteTransitionLoader'
 import { useAuthStore } from '../../stores/authStore'
 import { useThemeStore } from '../../stores/themeStore'
 import { durations } from '../../motion/tokens'
+import { useNotificationEngine } from '../../hooks/useNotificationEngine'
 
 export function AppShell() {
   const { user, isAuthenticated, isOnboarded } = useAuthStore()
@@ -18,6 +19,9 @@ export function AppShell() {
   const location = useLocation()
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false)
+
+  // ── Notification Engine: always-on event-driven notifications ──
+  useNotificationEngine()
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme)
@@ -27,10 +31,7 @@ export function AppShell() {
     setMobileSidebarOpen(false)
   }, [location.pathname])
 
-  if (!isAuthenticated) return <Navigate to="/login" replace />
-  if (!isOnboarded && location.pathname !== '/app/onboarding') {
-    return <Navigate to="/app/onboarding" replace />
-  }
+
 
   return (
     <div
