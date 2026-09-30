@@ -348,7 +348,7 @@ export function Step4Places() {
 
       <button
         onClick={() => { completeStep(4); setStep(5) }}
-        className="w-full py-4 mt-auto rounded-2xl bg-gradient-to-r from-[#FC6C26] to-[#e55a15] text-white font-black text-[15px] shadow-[0_8px_25px_rgba(252,108,38,0.4)] hover:opacity-95 transition-opacity flex items-center justify-center gap-2"
+        className="w-full py-4 mt-auto rounded-2xl bg-black text-white border-2 border-black dark:border-neutral-700 font-black text-[16px] shadow-xl hover:bg-neutral-900 transition-all flex items-center justify-center gap-2 cursor-pointer select-none active:scale-[0.99]"
       >
         Continue to Pack & Budget <ArrowRight size={16} />
       </button>

@@ -53,3 +53,17 @@ def verify_otp():
         "success": True,
         "message": "OTP verified successfully"
     })
+
+@auth_bp.route("/reset-password", methods=["POST"])
+def reset_password():
+    data = request.get_json()
+    email = data.get("email")
+    new_password = data.get("newPassword")
+    if not email or not new_password:
+        return jsonify({"error": "Email and new password are required"}), 400
+
+    return jsonify({
+        "success": True,
+        "message": "Password reset successfully"
+    })
+

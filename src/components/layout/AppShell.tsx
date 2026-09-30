@@ -1,10 +1,11 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { Outlet, useLocation, Navigate } from 'react-router-dom'
 import { AnimatePresence, motion } from 'framer-motion'
 import { Sidebar } from './Sidebar'
 import { Topbar } from './Topbar'
 import { MobileNav } from './MobileNav'
 import { JotformAgentWidget } from '../ai/JotformAgentWidget'
+import { RouteTransitionLoader } from './RouteTransitionLoader'
 
 
 import { useAuthStore } from '../../stores/authStore'
@@ -101,7 +102,9 @@ export function AppShell() {
             minHeight: '100vh',
           }}
         >
-          <Outlet />
+          <Suspense fallback={<RouteTransitionLoader />}>
+            <Outlet />
+          </Suspense>
         </main>
 
         {/* Mobile Bottom Navigation */}

@@ -10,6 +10,7 @@ import { useNotificationStore } from '../../stores/notificationStore'
 import { useSettingsStore } from '../../stores/settingsStore'
 import { t } from '../../utils/formatters'
 import { springSnappy, springSoft, easeReveal, durations } from '../../motion/tokens'
+import { prefetchRoute } from '../../utils/routePrefetcher'
 
 const NAV_ITEMS = [
   { icon: LayoutDashboard, label: 'Dashboard', to: '/app/dashboard' },
@@ -108,7 +109,15 @@ export function Sidebar({ collapsed, onCollapse, isMobile = false }: SidebarProp
       <nav className="flex-1 overflow-y-auto py-6 px-3">
         <ul className="space-y-1.5 relative" onMouseLeave={() => setHoveredPath(null)}>
           {NAV_ITEMS.map((item) => (
-            <li key={item.to} className="relative" onMouseEnter={() => setHoveredPath(item.to)}>
+            <li
+              key={item.to}
+              className="relative"
+              onMouseEnter={() => {
+                setHoveredPath(item.to)
+                const routeKey = item.to.split('/')[2]
+                if (routeKey) prefetchRoute(routeKey)
+              }}
+            >
               {hoveredPath === item.to && (
                 <motion.div
                   layoutId="sidebar-hover-pill"

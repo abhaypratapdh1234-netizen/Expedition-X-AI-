@@ -14,6 +14,7 @@ import {
 } from 'lucide-react'
 import { OSMMap } from '../../../components/ui/OSMMap'
 import { jsPDF } from 'jspdf'
+import { useFlightStore } from '../../../stores/flightStore'
 import {
   computeTripIntelligence,
   type TripIntelligencePayload,
@@ -488,21 +489,51 @@ function OfflinePackSection({ destination, date, days, payload, stops }: {
     doc.text("Ambulance: 108", 113, 56)
     doc.text("Tourist Helpline: 1800-111-363", 113, 61)
 
+    let currentY = 76
+    const selectedFlight = useFlightStore.getState().selectedFlight
+    if (selectedFlight) {
+      doc.setFillColor(255, 247, 237) // orange-50
+      doc.setDrawColor(254, 215, 170) // orange-200
+      doc.roundedRect(15, currentY, 180, 24, 4, 4, 'FD')
+
+      doc.setFillColor(252, 108, 38)
+      doc.rect(20, currentY + 4, 2.5, 4.5, 'F')
+
+      doc.setFont("helvetica", "bold")
+      doc.setFontSize(9)
+      doc.setTextColor(154, 52, 18) // orange-800
+      const flName = `${selectedFlight.airline?.name || 'Airline'} ${selectedFlight.flightIata || selectedFlight.flightNumber || ''}`
+      doc.text(`ATTACHED FLIGHT: ${flName.toUpperCase()}`, 25, currentY + 7.5)
+
+      doc.setFont("helvetica", "normal")
+      doc.setFontSize(8)
+      doc.setTextColor(30, 41, 59)
+      const depText = `${selectedFlight.departure?.airport || selectedFlight.departure?.iata} (${selectedFlight.departure?.iata || 'DEP'})`
+      const arrText = `${selectedFlight.arrival?.airport || selectedFlight.arrival?.iata} (${selectedFlight.arrival?.iata || 'ARR'})`
+      doc.text(`Route: ${depText} -> ${arrText}`, 20, currentY + 14)
+
+      const depDate = selectedFlight.departure?.scheduled ? new Date(selectedFlight.departure.scheduled).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' }) : 'Scheduled'
+      const dur = selectedFlight.durationMinutes ? `${Math.floor(selectedFlight.durationMinutes / 60)}h ${selectedFlight.durationMinutes % 60}m` : 'Direct'
+      doc.text(`Departure: ${depDate}   |   Duration: ${dur}   |   Status: ${(selectedFlight.status || 'Confirmed').toUpperCase()}`, 20, currentY + 19.5)
+
+      currentY += 30
+    }
+
     // ── Planned Itinerary Stops ──
     doc.setFillColor(252, 108, 38)
-    doc.rect(15, 76, 3, 5, 'F')
+    doc.rect(15, currentY, 3, 5, 'F')
 
     doc.setFont("helvetica", "bold")
     doc.setFontSize(10.5)
     doc.setTextColor(15, 23, 42)
-    doc.text("PLANNED ITINERARY STOPS", 21, 80)
+    doc.text("PLANNED ITINERARY STOPS", 21, currentY + 4)
 
     // Timeline line
     doc.setDrawColor(226, 232, 240)
     doc.setLineWidth(1.5)
-    doc.line(20, 86, 20, 86 + (stops.length - 1) * 13)
+    doc.line(20, currentY + 10, 20, currentY + 10 + (stops.length - 1) * 13)
 
-    let y = 87
+    let y = currentY + 11
     stops.forEach((stop, index) => {
       // Timeline Dot
       doc.setFillColor(252, 108, 38)

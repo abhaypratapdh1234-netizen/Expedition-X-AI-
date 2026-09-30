@@ -30,6 +30,9 @@ export default defineConfig({
     },
   },
   build: {
+    target: 'esnext',
+    cssCodeSplit: true,
+    chunkSizeWarningLimit: 1200,
     rollupOptions: {
       output: {
         manualChunks(id) {
@@ -38,6 +41,9 @@ export default defineConfig({
           }
           if (id.includes('node_modules/framer-motion/') || id.includes('node_modules/lucide-react/')) {
             return 'ui-vendor';
+          }
+          if (id.includes('node_modules/jspdf/') || id.includes('node_modules/html2canvas/')) {
+            return 'pdf-vendor';
           }
           if (id.includes('node_modules/recharts/')) {
             return 'chart-vendor';

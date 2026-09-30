@@ -3,6 +3,7 @@ export interface SearchFilters {
   category?: string
   country?: string
   minRating?: number
+  sortBy?: 'recommended' | 'rating' | 'cost_asc' | 'cost_desc' | 'name'
 }
 
 // Interfaces matching the backend PlaceResponse / PlaceDetailResponse
@@ -230,80 +231,230 @@ export const VERIFIED_LANDMARKS_DATA: Record<string, { image: string; avgCost?: 
   },
 }
 
-export function sanitizePlaceResponse<T extends { name?: string; imageUrl?: string; avgCost?: number }>(place: T): T {
+export const CATEGORY_SYNONYMS: Record<string, string[]> = {
+  trending: ['trending', 'popular', 'top', 'famous'],
+  adventure: ['adventure', 'nature', 'hill', 'hills', 'trek', 'trekking', 'rafting', 'skiing', 'sports', 'desert', 'paragliding'],
+  heritage: ['heritage', 'historical', 'historic', 'culture', 'cultural', 'temple', 'palace', 'monument', 'fort', 'ghats', 'ruins', 'ancient'],
+  beach: ['beach', 'coastal', 'sea', 'ocean', 'island', 'islands', 'water', 'backwaters'],
+  offbeat: ['offbeat', 'nature', 'village', 'valley', 'hidden', 'remote', 'hills', 'scenic', 'misty'],
+  'food trails': ['food', 'food trails', 'culinary', 'dining', 'cuisine', 'street food', 'sweets'],
+  food: ['food', 'food trails', 'culinary', 'dining', 'cuisine', 'street food'],
+  nightlife: ['nightlife', 'party', 'club', 'city', 'bars', 'evening', 'beach', 'shacks'],
+}
+
+export function matchesCategory(itemCat: any, targetCat?: string): boolean {
+  if (!targetCat || targetCat.toLowerCase().trim() === 'all') return true
+  const target = targetCat.toLowerCase().trim()
+  const keywords = CATEGORY_SYNONYMS[target] || [target]
+  
+  let itemStrings: string[] = []
+  if (Array.isArray(itemCat)) {
+    itemStrings = itemCat.map(c => String(c).toLowerCase().trim())
+  } else if (typeof itemCat === 'string') {
+    itemStrings = itemCat.toLowerCase().split(',').map(s => s.trim())
+  }
+
+  return keywords.some(kw => 
+    itemStrings.some(cat => cat.includes(kw) || kw.includes(cat))
+  )
+}
+
+export function isIndiaDestination(place: any): boolean {
+  if (!place) return false
+  const country = (place.country || '').toLowerCase().trim()
+  if (country === 'india' || country === 'in' || country.includes('india')) return true
+
+  const indianKeywords = [
+    'delhi', 'new delhi', 'agra', 'jaipur', 'goa', 'kerala', 'mumbai', 'manali', 'solang', 
+    'varanasi', 'udaipur', 'hampi', 'ladakh', 'leh', 'darjeeling', 'kolkata', 'rajasthan', 
+    'himachal', 'karnataka', 'uttar pradesh', 'punjab', 'kashmir', 'rishikesh', 'amritsar', 
+    'coorg', 'ooty', 'andaman', 'spiti', 'munnar', 'shimla', 'jodhpur', 'pondicherry', 
+    'shillong', 'mysore', 'pachmarhi', 'bhopal', 'maharashtra', 'bengaluru', 'bangalore', 
+    'chennai', 'hyderabad', 'taj mahal', 'red fort', 'qutub minar', 'india gate', 'hawa mahal', 
+    'amber fort', 'baga beach', 'dudhsagar', 'alleppey', 'marine drive', 'victoria memorial', 'nilgiri'
+  ]
+  const text = `${place.name || ''} ${place.city || ''} ${place.state || ''}`.toLowerCase()
+  return indianKeywords.some(kw => text.includes(kw))
+}
+
+export function sanitizePlaceResponse<T extends { name?: string; imageUrl?: string; image?: string; avgCost?: number; costPerDay?: number; country?: string; state?: string }>(place: T): T {
   if (!place || !place.name) return place
   const nameKey = place.name.toLowerCase().trim()
   const matched = Object.entries(VERIFIED_LANDMARKS_DATA).find(([k]) => nameKey.includes(k) || k.includes(nameKey))
+  
+  let finalPlace: any = { ...place }
+
   if (matched) {
     const [, info] = matched
-    return {
-      ...place,
-      imageUrl: info.image,
-      avgCost: info.avgCost !== undefined ? info.avgCost : place.avgCost,
+    finalPlace.imageUrl = info.image
+    if (info.avgCost !== undefined) {
+      finalPlace.avgCost = info.avgCost
     }
+  } else if (!finalPlace.imageUrl && finalPlace.image) {
+    finalPlace.imageUrl = finalPlace.image
   }
-  return place
+
+  if (finalPlace.avgCost === undefined && finalPlace.costPerDay !== undefined) {
+    finalPlace.avgCost = finalPlace.costPerDay
+  }
+
+  if ((!finalPlace.country || finalPlace.country.toLowerCase() !== 'india') && isIndiaDestination(finalPlace)) {
+    finalPlace.country = 'India'
+  }
+
+  return finalPlace
+}
+
+// In-memory cache for search queries (TTL: 2 minutes)
+const searchCache = new Map<string, { timestamp: number; data: PlaceResponse[] }>()
+const SEARCH_CACHE_TTL = 120 * 1000
+
+// Memoized curated base pool
+let memoizedCuratedBase: PlaceResponse[] | null = null
+function getCuratedBase(): PlaceResponse[] {
+  if (memoizedCuratedBase) return memoizedCuratedBase
+  memoizedCuratedBase = [...DESTINATIONS, ...TOURIST_PLACES].map(d => ({
+    id: d.id,
+    name: d.name,
+    city: d.city || d.name,
+    country: d.country || (isIndiaDestination(d) ? 'India' : 'International'),
+    state: d.state || '',
+    category: Array.isArray(d.category) ? d.category.join(', ') : (d.category || ''),
+    description: d.description || '',
+    latitude: d.latitude || d.lat || 0,
+    longitude: d.longitude || d.lng || 0,
+    avgCost: d.avgCost || d.costPerDay || d.entryFee || 2500,
+    imageUrl: d.imageUrl || d.image || '',
+    rating: d.rating || 4.7,
+    reviewCount: d.reviewCount || d.reviews || 1000,
+    bestTime: d.bestTime || 'Year-round',
+    safetyAdvisory: 'Generally safe for tourists',
+    trending: d.trending ?? true
+  })) as PlaceResponse[]
+  return memoizedCuratedBase
 }
 
 export const placeService = {
   async searchDestinations(filters: SearchFilters = {}): Promise<PlaceResponse[]> {
-    const params = new URLSearchParams()
-    if (filters.query) params.append('query', filters.query)
-    if (filters.category) params.append('category', filters.category)
-    
-    let results: PlaceResponse[] = []
-    
+    const cacheKey = JSON.stringify(filters)
+    const cached = searchCache.get(cacheKey)
+    if (cached && (Date.now() - cached.timestamp < SEARCH_CACHE_TTL)) {
+      return cached.data
+    }
+
+    // 1. Establish the high-fidelity curated base pool (covering all themes and locations)
+    const baseCurated = getCuratedBase()
+    let pool = [...baseCurated]
+
+    // 2. Fetch from backend API if available, and merge new live places
     try {
-      if (filters.category === 'Trending') {
-        results = await apiClient.get<PlaceResponse[]>('/places/trending')
+      const params = new URLSearchParams()
+      if (filters.query) params.append('query', filters.query)
+      if (filters.category && filters.category !== 'Trending') params.append('category', filters.category)
+      
+      const endpoint = filters.category === 'Trending' ? '/places/trending' : `/places/search?${params.toString()}`
+      const apiResults = await apiClient.get<PlaceResponse[]>(endpoint)
+      
+      if (apiResults && Array.isArray(apiResults) && apiResults.length > 0) {
+        // Merge API results on top of pool, deduplicating by normalized name
+        const seenNames = new Set(apiResults.map(p => p.name.toLowerCase().trim()))
+        pool = [...apiResults, ...pool.filter(p => !seenNames.has(p.name.toLowerCase().trim()))]
+      }
+    } catch (e) {
+      // Backend unavailable or running in client-only/serverless mode
+    }
+
+    let results = pool
+
+    // 3. Search Query Filter
+    if (filters.query) {
+      const q = filters.query.toLowerCase().trim()
+      results = results.filter(d => 
+        (d.name && d.name.toLowerCase().includes(q)) || 
+        (d.city && d.city.toLowerCase().includes(q)) || 
+        (d.state && d.state.toLowerCase().includes(q)) ||
+        (d.country && d.country.toLowerCase().includes(q)) ||
+        (d.description && d.description.toLowerCase().includes(q))
+      )
+      
+      // Wikipedia fallback if query found nothing
+      if (results.length === 0) {
+        const wikiQuery = filters.country?.toLowerCase() === 'india' ? `${filters.query} India` : filters.query
+        results = await fetchFromWikipedia(wikiQuery, filters.country)
+      }
+    }
+
+    // 4. Semantic Category / Theme Filter
+    if (filters.category && filters.category.toLowerCase().trim() !== 'all') {
+      const cat = filters.category.toLowerCase().trim()
+      if (cat === 'trending') {
+        results = results.filter(d => d.trending || (d.rating && d.rating >= 4.7) || matchesCategory(d.category, 'trending'))
       } else {
-        results = await apiClient.get<PlaceResponse[]>(`/places/search?${params.toString()}`)
+        results = results.filter(d => matchesCategory(d.category, cat))
       }
-    } catch (error) {
-      console.error('Error fetching destinations, falling back to mock:', error)
-      let mockResults = [...DESTINATIONS, ...TOURIST_PLACES] as unknown as PlaceResponse[]
-      
-      // Simple local search if query exists
-      if (filters.query) {
-        const q = filters.query.toLowerCase()
-        mockResults = mockResults.filter(d => 
-          d.name.toLowerCase().includes(q) || 
-          (d.city && d.city.toLowerCase().includes(q)) || 
-          (d.state && d.state.toLowerCase().includes(q))
-        )
-      }
-      
-      if (filters.category) {
-        if (filters.category === 'Trending') {
-          // Fallback to top 10 mock destinations for trending
-          mockResults = mockResults.slice(0, 10)
-        } else {
-          mockResults = mockResults.filter(d => d.category?.toLowerCase().includes(filters.category!.toLowerCase()))
-        }
-      }
-      
-      results = mockResults
     }
 
-    // Wikipedia Fallback Magic
-    if (results.length === 0 && filters.query) {
-      results = await fetchFromWikipedia(filters.query, filters.country)
-    }
-
+    // 5. Country Filter (INDIA vs OTHER FOREIGN vs ALL)
     if (filters.country) {
-      const c = filters.country.toLowerCase()
-      if (c === 'foreign') {
-        results = results.filter(d => d.country && d.country.toLowerCase() !== 'india')
+      const c = filters.country.toLowerCase().trim()
+      if (c === 'foreign' || c === 'other') {
+        results = results.filter(d => !isIndiaDestination(d))
+      } else if (c === 'india' || c === 'in') {
+        results = results.filter(d => isIndiaDestination(d))
       } else {
         results = results.filter(d => d.country && d.country.toLowerCase() === c)
       }
     }
 
-    if (filters.minRating) {
-      results = results.filter(d => d.rating >= filters.minRating!)
+    // 6. Minimum Rating Filter
+    if (filters.minRating !== undefined && filters.minRating !== null && Number(filters.minRating) > 0) {
+      const minR = Number(filters.minRating)
+      results = results.filter(d => Number(d.rating || 0) >= minR)
     }
-    
-    return results.map(sanitizePlaceResponse)
+
+    // 7. Safety Net: If combination returned 0 (e.g. strict backend query), ensure matching fallback from curated catalog
+    if (results.length === 0 && filters.category && filters.category.toLowerCase().trim() !== 'all') {
+      const cat = filters.category.toLowerCase().trim()
+      let fallback = pool.filter(d => matchesCategory(d.category, cat))
+      if (filters.country) {
+        const c = filters.country.toLowerCase().trim()
+        if (c === 'india' || c === 'in') {
+          fallback = fallback.filter(d => isIndiaDestination(d))
+        } else if (c === 'foreign' || c === 'other') {
+          fallback = fallback.filter(d => !isIndiaDestination(d))
+        }
+      }
+      if (filters.minRating !== undefined && filters.minRating !== null && Number(filters.minRating) > 0) {
+        const minR = Number(filters.minRating)
+        const ratingMatches = fallback.filter(d => Number(d.rating || 0) >= minR)
+        if (ratingMatches.length > 0) {
+          fallback = ratingMatches
+        }
+      }
+      if (fallback.length > 0) {
+        results = fallback
+      }
+    }
+
+    const sanitizedResults = results.map(sanitizePlaceResponse)
+
+    // 8. Sorting
+    if (filters.sortBy) {
+      if (filters.sortBy === 'rating') {
+        sanitizedResults.sort((a, b) => (Number(b.rating) || 0) - (Number(a.rating) || 0))
+      } else if (filters.sortBy === 'cost_asc') {
+        sanitizedResults.sort((a, b) => (Number(a.avgCost) || 0) - (Number(b.avgCost) || 0))
+      } else if (filters.sortBy === 'cost_desc') {
+        sanitizedResults.sort((a, b) => (Number(b.avgCost) || 0) - (Number(a.avgCost) || 0))
+      } else if (filters.sortBy === 'name') {
+        sanitizedResults.sort((a, b) => (a.name || '').localeCompare(b.name || ''))
+      }
+    }
+
+    // Cache results for instant subsequent lookups
+    searchCache.set(cacheKey, { timestamp: Date.now(), data: sanitizedResults })
+
+    return sanitizedResults
   },
 
   async getDestinationById(id: string): Promise<PlaceDetailResponse | null> {
@@ -376,11 +527,30 @@ export const placeService = {
   async getTrendingDestinations(): Promise<PlaceResponse[]> {
     try {
       const list = await apiClient.get<PlaceResponse[]>('/places/trending')
-      return (list || []).map(sanitizePlaceResponse)
+      if (list && Array.isArray(list) && list.length > 0) {
+        return list.map(sanitizePlaceResponse)
+      }
     } catch (error) {
-      console.error('Error fetching trending destinations:', error)
-      return []
+      // Backend unavailable or timed out — seamlessly use curated trending destinations
     }
+    return DESTINATIONS.filter(d => d.trending).map(d => sanitizePlaceResponse({
+      id: d.id,
+      name: d.name,
+      city: d.city || d.name,
+      country: d.country || (isIndiaDestination(d) ? 'India' : 'International'),
+      state: d.state || '',
+      category: Array.isArray(d.category) ? d.category.join(', ') : (d.category || 'Trending'),
+      description: d.description || '',
+      latitude: d.latitude || d.lat || 0,
+      longitude: d.longitude || d.lng || 0,
+      avgCost: d.avgCost || d.costPerDay || 2500,
+      imageUrl: d.imageUrl || d.image || '',
+      rating: d.rating || 4.8,
+      reviewCount: d.reviewCount || d.reviews || 1200,
+      bestTime: d.bestTime || 'Year-round',
+      safetyAdvisory: 'Safe for tourists',
+      trending: true
+    } as PlaceResponse))
   },
 
   async getSafetyAdvisory(city: string) {

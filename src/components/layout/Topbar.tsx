@@ -15,6 +15,7 @@ import { useSettingsStore } from '../../stores/settingsStore'
 import { t } from '../../utils/formatters'
 import { springSnappy, springSoft, easeReveal, easeExit, durations } from '../../motion/tokens'
 import { dropdownVariants, dropdownItemVariants } from '../../motion/variants'
+import { prefetchRoute } from '../../utils/routePrefetcher'
 
 interface TopbarProps {
   onMenuClick: () => void
@@ -239,7 +240,10 @@ export function Topbar({ onMenuClick, user }: TopbarProps) {
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder={t('Search destinations, trips, users...', language)}
               className="w-full bg-transparent text-[15px] text-[var(--text-primary)] outline-none placeholder:text-[#9ca3af] py-3.5 font-black tracking-wide"
-              onFocus={() => setSearchFocused(true)}
+              onFocus={() => {
+                setSearchFocused(true)
+                prefetchRoute('explore')
+              }}
               onBlur={() => setTimeout(() => setSearchFocused(false), 200)}
               style={{ caretColor: '#FC6C26' }}
             />

@@ -83,6 +83,31 @@ export const AIRLINES = [
 
 const STATUSES = ['scheduled', 'scheduled', 'scheduled', 'active', 'landed']
 
+/** Maps airport names / IATAs to clean city/destination names */
+export function getCityFromAirport(airportOrIata?: string | null): string {
+  if (!airportOrIata) return ''
+  const upper = airportOrIata.toUpperCase()
+  if (upper.includes('BOM') || upper.includes('SHIVAJI') || upper.includes('MUMBAI') || upper.includes('SAHAR')) return 'Mumbai'
+  if (upper.includes('DEL') || upper.includes('INDIRA GANDHI') || upper.includes('DELHI')) return 'New Delhi'
+  if (upper.includes('BLR') || upper.includes('KEMPEGOWDA') || upper.includes('BENGALURU') || upper.includes('BANGALORE')) return 'Bengaluru'
+  if (upper.includes('GOI') || upper.includes('GOX') || upper.includes('DABOLIM') || upper.includes('MANOHAR') || upper.includes('GOA')) return 'Goa'
+  if (upper.includes('MAA') || upper.includes('CHENNAI')) return 'Chennai'
+  if (upper.includes('CCU') || upper.includes('KOLKATA') || upper.includes('NETAJI')) return 'Kolkata'
+  if (upper.includes('HYD') || upper.includes('HYDERABAD') || upper.includes('RAJIV GANDHI')) return 'Hyderabad'
+  if (upper.includes('JAI') || upper.includes('JAIPUR')) return 'Jaipur'
+  if (upper.includes('DXB') || upper.includes('DUBAI')) return 'Dubai'
+  if (upper.includes('CDG') || upper.includes('PARIS') || upper.includes('CHARLES DE GAULLE')) return 'Paris'
+  if (upper.includes('HND') || upper.includes('NRT') || upper.includes('TOKYO')) return 'Tokyo'
+  if (upper.includes('DPS') || upper.includes('BALI') || upper.includes('NGURAH RAI')) return 'Bali'
+  if (upper.includes('SIN') || upper.includes('SINGAPORE') || upper.includes('CHANGI')) return 'Singapore'
+  if (upper.includes('LHR') || upper.includes('LONDON') || upper.includes('HEATHROW')) return 'London'
+  if (upper.includes('JFK') || upper.includes('NEW YORK')) return 'New York'
+  if (upper.includes('COK') || upper.includes('COCHIN') || upper.includes('KOCHI')) return 'Kochi'
+  if (upper.includes('AMD') || upper.includes('AHMEDABAD')) return 'Ahmedabad'
+  if (upper.includes('PNQ') || upper.includes('PUNE')) return 'Pune'
+  return airportOrIata
+}
+
 /** Safely normalizes any date string format (YYYY-MM-DD, DD-MM-YYYY, etc.) to YYYY-MM-DD */
 export function normalizeDateString(dateStr?: string): string {
   if (!dateStr) return new Date().toISOString().split('T')[0]

@@ -117,6 +117,7 @@ function StepRow({ step, index }: { step: StepLog; index: number }) {
 function ResultBlock({ intent, result }: { intent: string; result: unknown }) {
   const data = result as Record<string, unknown>
   const navigate = useNavigate()
+  const [expandedRow, setExpandedRow] = useState<string | null>(null)
   if (!data) return null
 
   // ── Navigate: open a feature page ──────────────────────────────────────────
@@ -264,7 +265,6 @@ function ResultBlock({ intent, result }: { intent: string; result: unknown }) {
     const travelers = Number(data.travelers) || 1
     const liveCount = lineItems.filter(q => q.pricingType === 'live').length
     const estCount = lineItems.filter(q => q.pricingType === 'estimated').length
-    const [expandedRow, setExpandedRow] = useState<string | null>(null)
 
     return (
       <ResultShell

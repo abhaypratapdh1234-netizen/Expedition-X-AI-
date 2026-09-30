@@ -5,10 +5,12 @@ import {
   Plus, Trash2, GripVertical, Sparkles, Map, DollarSign, Clock, Calendar,
   Zap, Compass, ArrowRight, Activity, Edit2, Check, X, ChevronDown, ChevronUp,
   Star, Package, Shield, Utensils, AlertTriangle, Phone, Building2, Flag,
-  Route, CheckSquare, Square, Leaf, TrendingDown, Sliders, Globe
+  Route, CheckSquare, Square, Leaf, TrendingDown, Sliders, Globe, Download, Plane
 } from 'lucide-react'
+import { jsPDF } from 'jspdf'
 import { useTripStore } from '../../../stores/tripStore'
 import { useWizardStore } from '../../../stores/wizardStore'
+import { useFlightStore } from '../../../stores/flightStore'
 import { useIntelligenceStore } from '../../../stores/intelligenceStore'
 import type { ItineraryItem, DayPlan } from '../../../services/tripService'
 import { pageTransition } from '../../../motion/variants'
@@ -192,6 +194,7 @@ function EmergencySOSModal({ destination, onClose }: { destination: string; onCl
 export function ItineraryBuilder() {
   const { currentTrip, fetchTripById, updateItinerary, optimizeDay } = useTripStore()
   const wizardState = useWizardStore()
+  const { selectedFlight } = useFlightStore()
   const navigate = useNavigate()
 
   const TRIP_ID = currentTrip?.id || '1'
@@ -330,6 +333,239 @@ export function ItineraryBuilder() {
     }, 600)
   }, [whatIfBudget, whatIfDuration, whatIfMonth, currentTrip])
 
+  // ── PDF Export with Selected Flight & Itinerary Details ──
+  const handleExportPDF = () => {
+    const doc = new jsPDF()
+    const pageWidth = doc.internal.pageSize.getWidth() // 210
+    const pageHeight = doc.internal.pageSize.getHeight() // 297
+    let y = 20
+
+    const checkPageBreak = (neededHeight: number) => {
+      if (y + neededHeight > pageHeight - 20) {
+        doc.addPage()
+        y = 20
+        return true
+      }
+      return false
+    }
+
+    // 1. Header Banner
+    doc.setFillColor(15, 23, 42) // slate-900
+    doc.rect(0, 0, pageWidth, 28, 'F')
+
+    doc.setFillColor(252, 108, 38) // Accent orange bar
+    doc.rect(0, 28, pageWidth, 2, 'F')
+
+    doc.setFont('helvetica', 'bold')
+    doc.setFontSize(18)
+    doc.setTextColor(255, 255, 255)
+    doc.text('EXPEDITION X AI', 16, 15)
+
+    doc.setFont('helvetica', 'normal')
+    doc.setFontSize(8.5)
+    doc.setTextColor(203, 213, 225)
+    doc.text('OFFICIAL EXPEDITION ITINERARY & TRAVEL DISPATCH', 16, 22)
+
+    const dateStr = new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })
+    doc.setFontSize(8)
+    doc.text(`Generated: ${dateStr}`, pageWidth - 16, 18, { align: 'right' })
+
+    y = 38
+
+    // 2. Trip Overview Card
+    doc.setFillColor(248, 250, 252) // slate-50
+    doc.setDrawColor(226, 232, 240) // slate-200
+    doc.setLineWidth(0.5)
+    doc.roundedRect(15, y, pageWidth - 30, 26, 3, 3, 'FD')
+
+    doc.setFillColor(252, 108, 38)
+    doc.rect(18, y + 4, 2.5, 4, 'F')
+
+    doc.setFont('helvetica', 'bold')
+    doc.setFontSize(9)
+    doc.setTextColor(15, 23, 42)
+    doc.text('EXPEDITION SUMMARY', 23, y + 7.5)
+
+    doc.setFont('helvetica', 'normal')
+    doc.setFontSize(8.5)
+    doc.setTextColor(51, 65, 85)
+
+    const destText = destination || currentTrip?.destinations?.join(', ') || 'Your Destination'
+    const durationText = `${days.length} Day${days.length !== 1 ? 's' : ''}`
+    const dateRangeText = days.length > 0 ? `${days[0].date} to ${days[days.length - 1].date}` : (currentTrip?.startDate || 'Upcoming')
+
+    doc.text(`Destination: ${destText}`, 18, y + 15)
+    doc.text(`Duration: ${durationText} (${dateRangeText})`, 18, y + 21)
+
+    doc.text(`Travelers: ${wizardState.party || 'Solo Explorer'}`, 110, y + 15)
+    doc.text(`Estimated Budget: Rs. ${grandTotal.toLocaleString()}`, 110, y + 21)
+
+    y += 32
+
+    // 3. FLIGHT DETAILS (If selectedFlight is available)
+    const flight = selectedFlight
+    if (flight) {
+      checkPageBreak(42)
+      doc.setFillColor(255, 247, 237) // orange-50
+      doc.setDrawColor(254, 215, 170) // orange-200
+      doc.setLineWidth(0.6)
+      doc.roundedRect(15, y, pageWidth - 30, 36, 3, 3, 'FD')
+
+      // Flight Left Accent Indicator
+      doc.setFillColor(252, 108, 38)
+      doc.rect(18, y + 4, 2.5, 4, 'F')
+
+      doc.setFont('helvetica', 'bold')
+      doc.setFontSize(9.5)
+      doc.setTextColor(154, 52, 18)
+      const flightName = `${flight.airline?.name || 'Commercial Airline'} ${flight.flightIata || flight.flightNumber || ''}`
+      doc.text(`ATTACHED FLIGHT: ${flightName.toUpperCase()}`, 23, y + 7.5)
+
+      // Status pill
+      doc.setFillColor(220, 252, 231)
+      doc.roundedRect(pageWidth - 48, y + 3.5, 30, 5.5, 1.5, 1.5, 'F')
+      doc.setFont('helvetica', 'bold')
+      doc.setFontSize(7.5)
+      doc.setTextColor(22, 101, 52)
+      doc.text((flight.status || 'CONFIRMED').toUpperCase(), pageWidth - 33, y + 7.5, { align: 'center' })
+
+      // Column Labels
+      doc.setFont('helvetica', 'bold')
+      doc.setFontSize(8)
+      doc.setTextColor(15, 23, 42)
+      doc.text('DEPARTURE', 20, y + 16)
+      doc.text('ARRIVAL', 85, y + 16)
+      doc.text('FLIGHT INFO', 145, y + 16)
+
+      doc.setFont('helvetica', 'normal')
+      doc.setFontSize(8)
+      doc.setTextColor(51, 65, 85)
+
+      // Departure info
+      const depAirport = flight.departure?.airport || flight.departure?.iata || 'Origin'
+      const depTime = flight.departure?.scheduled ? new Date(flight.departure.scheduled).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true }) : 'Scheduled'
+      const depDate = flight.departure?.scheduled ? new Date(flight.departure.scheduled).toLocaleDateString([], { day: '2-digit', month: 'short', year: 'numeric' }) : (flight.flightDate || '')
+      doc.text(`${depAirport} (${flight.departure?.iata || 'DEP'})`, 20, y + 22)
+      doc.text(`${depDate} · ${depTime}`, 20, y + 27)
+
+      // Arrival info
+      const arrAirport = flight.arrival?.airport || flight.arrival?.iata || 'Destination'
+      const arrTime = flight.arrival?.scheduled ? new Date(flight.arrival.scheduled).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true }) : 'Scheduled'
+      const arrDate = flight.arrival?.scheduled ? new Date(flight.arrival.scheduled).toLocaleDateString([], { day: '2-digit', month: 'short', year: 'numeric' }) : ''
+      doc.text(`${arrAirport} (${flight.arrival?.iata || 'ARR'})`, 85, y + 22)
+      doc.text(`${arrDate} · ${arrTime}`, 85, y + 27)
+
+      // Duration & Aircraft
+      const durStr = flight.durationMinutes ? `${Math.floor(flight.durationMinutes / 60)}h ${flight.durationMinutes % 60}m` : 'Direct Flight'
+      doc.text(`Duration: ${durStr}`, 145, y + 22)
+      doc.text(`Aircraft: ${flight.aircraft?.registration || flight.aircraft?.iata || 'Commercial Jet'}`, 145, y + 27)
+
+      y += 42
+    }
+
+    // 4. DAY-BY-DAY ITINERARY
+    doc.setFont('helvetica', 'bold')
+    doc.setFontSize(11)
+    doc.setTextColor(15, 23, 42)
+    doc.text('EXPEDITION SCHEDULE', 16, y)
+    y += 6
+
+    days.forEach((day) => {
+      checkPageBreak(30)
+
+      // Day Header Strip
+      doc.setFillColor(241, 245, 249)
+      doc.roundedRect(15, y, pageWidth - 30, 8, 1.5, 1.5, 'F')
+      doc.setFillColor(252, 108, 38)
+      doc.rect(15, y, 2.5, 8, 'F')
+
+      doc.setFont('helvetica', 'bold')
+      doc.setFontSize(9)
+      doc.setTextColor(15, 23, 42)
+      const dayDate = new Date(day.date).toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'short', year: 'numeric' })
+      doc.text(`DAY ${day.day} · ${dayDate.toUpperCase()}`, 20, y + 5.5)
+
+      const dayCost = day.items.reduce((s, it) => s + (it.cost || 0), 0)
+      doc.setFont('helvetica', 'normal')
+      doc.setFontSize(8)
+      doc.setTextColor(100, 116, 139)
+      doc.text(`${day.items.length} Stops · Rs. ${dayCost.toLocaleString()}`, pageWidth - 18, y + 5.5, { align: 'right' })
+
+      y += 12
+
+      // Items
+      day.items.forEach((item, itIdx) => {
+        checkPageBreak(12)
+
+        // Time pill
+        doc.setFillColor(248, 250, 252)
+        doc.setDrawColor(226, 232, 240)
+        doc.roundedRect(18, y - 3, 20, 6, 1, 1, 'FD')
+        doc.setFont('helvetica', 'bold')
+        doc.setFontSize(7)
+        doc.setTextColor(100, 116, 139)
+        doc.text(item.time || '10:00 AM', 28, y + 1.2, { align: 'center' })
+
+        // Item Name
+        doc.setFont('helvetica', 'bold')
+        doc.setFontSize(8.5)
+        doc.setTextColor(15, 23, 42)
+        doc.text(`${itIdx + 1}. ${item.name}`, 42, y + 1.2)
+
+        // Category and Duration
+        doc.setFont('helvetica', 'normal')
+        doc.setFontSize(7.5)
+        doc.setTextColor(100, 116, 139)
+        const catText = `${(item.type || 'activity').toUpperCase()} · ${item.duration || '1h'}`
+        doc.text(catText, 135, y + 1.2)
+
+        // Cost
+        doc.setFont('helvetica', 'bold')
+        doc.setFontSize(8)
+        doc.setTextColor(item.cost === 0 ? 63 : 252, item.cost === 0 ? 167 : 108, item.cost === 0 ? 150 : 38)
+        doc.text(item.cost === 0 ? 'Free' : `Rs. ${item.cost.toLocaleString()}`, pageWidth - 18, y + 1.2, { align: 'right' })
+
+        // Separator line
+        doc.setDrawColor(241, 245, 249)
+        doc.line(18, y + 4.5, pageWidth - 18, y + 4.5)
+
+        y += 8
+      })
+
+      y += 4
+    })
+
+    // 5. Emergency Contacts & Footer
+    checkPageBreak(25)
+    doc.setFillColor(254, 242, 242)
+    doc.setDrawColor(254, 202, 202)
+    doc.roundedRect(15, y, pageWidth - 30, 16, 2, 2, 'FD')
+
+    doc.setFont('helvetica', 'bold')
+    doc.setFontSize(8)
+    doc.setTextColor(153, 27, 27)
+    doc.text('EMERGENCY TRAVEL ASSISTANCE:', 20, y + 6)
+
+    doc.setFont('helvetica', 'normal')
+    doc.setFontSize(7.5)
+    doc.setTextColor(30, 41, 59)
+    doc.text('Police: 100   |   Ambulance: 108   |   National Tourist Helpline: 1800-111-363 (24/7 Toll-Free)', 20, y + 11.5)
+
+    // Page Numbers on all pages
+    const totalPages = doc.getNumberOfPages()
+    for (let p = 1; p <= totalPages; p++) {
+      doc.setPage(p)
+      doc.setFont('helvetica', 'normal')
+      doc.setFontSize(7.5)
+      doc.setTextColor(148, 163, 184)
+      doc.text(`ExpeditionX AI — Page ${p} of ${totalPages}`, pageWidth / 2, pageHeight - 10, { align: 'center' })
+    }
+
+    // Save
+    const safeName = (destination || 'Expedition').replace(/[^a-zA-Z0-9]/g, '_')
+    doc.save(`${safeName}_Itinerary_ExpeditionX.pdf`)
+  }
+
 
   if (!currentTrip || !currentTrip.itinerary) {
     return (
@@ -372,10 +608,10 @@ export function ItineraryBuilder() {
             <p className="text-[var(--text-secondary)] font-semibold text-[17px] antialiased">Drag and drop to rearrange points. The AI will instantly recalculate transit times.</p>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3">
             <button
               onClick={() => { wizardState.reset(); navigate('/app/planner/setup') }}
-              className="flex items-center gap-2 bg-[var(--bg-card)] hover:bg-[var(--bg-card)] border border-[var(--border-subtle)] px-5 py-3.5 rounded-[20px] font-bold text-[15px] transition-all shadow-sm text-[var(--text-primary)] hover:text-[#FC6C26] hover:border-[#FC6C26]/30 antialiased"
+              className="flex items-center gap-2 bg-[var(--bg-card)] hover:bg-[var(--bg-card)] border border-[var(--border-subtle)] px-5 py-3.5 rounded-[20px] font-bold text-[15px] transition-all shadow-sm text-[var(--text-primary)] hover:text-[#FC6C26] hover:border-[#FC6C26]/30 antialiased cursor-pointer"
             >
               <Sparkles size={16} /> New Trip
             </button>
@@ -391,6 +627,13 @@ export function ItineraryBuilder() {
             >
               <Compass size={18} className="text-[#3fa796]" /> Global Map View
             </Link>
+            <button
+              onClick={handleExportPDF}
+              className="flex items-center gap-2 bg-[#FC6C26] hover:bg-[#e05818] text-white px-6 py-4 rounded-[20px] font-bold text-[16px] transition-all shadow-md shadow-[#FC6C26]/20 cursor-pointer antialiased"
+              title="Download full trip itinerary with attached flight as PDF"
+            >
+              <Download size={18} /> Export PDF
+            </button>
           </div>
         </header>
 
@@ -398,6 +641,71 @@ export function ItineraryBuilder() {
 
           {/* ── LEFT: Day Cards (8 cols) ── */}
           <div className="lg:col-span-8 space-y-10">
+
+            {/* Attached Flight Details Card (if selected) */}
+            {selectedFlight && (
+              <motion.div
+                initial={{ opacity: 0, y: 15 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="bg-[var(--bg-card)] rounded-[28px] p-6 sm:p-7 border border-[#FC6C26]/25 shadow-sm relative overflow-hidden group"
+              >
+                <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-[#FC6C26]/10 to-transparent rounded-bl-full pointer-events-none" />
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-11 h-11 rounded-2xl bg-[#FC6C26]/10 border border-[#FC6C26]/20 flex items-center justify-center text-[#FC6C26] shrink-0">
+                      <Plane size={22} />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-[11px] font-black uppercase tracking-wider text-[#FC6C26]">Attached Flight Details</span>
+                        <span
+                          className="px-2.5 py-0.5 rounded-full text-[11px] font-black shadow-sm"
+                          style={{ backgroundColor: '#000000', color: '#ffffff', border: '1px solid #000000' }}
+                        >
+                          ● {(selectedFlight.status || 'Confirmed').toUpperCase()}
+                        </span>
+                      </div>
+                      <h3 className="text-[20px] font-black text-[var(--text-primary)] tracking-tight">
+                        {selectedFlight.airline?.name || 'Flight'} {selectedFlight.flightIata || selectedFlight.flightNumber}
+                      </h3>
+                    </div>
+                  </div>
+                  <button
+                    onClick={handleExportPDF}
+                    className="flex items-center gap-2 text-[13px] font-bold text-[#FC6C26] bg-[#FC6C26]/10 hover:bg-[#FC6C26]/20 px-4 py-2.5 rounded-xl transition-all cursor-pointer border border-[#FC6C26]/20"
+                  >
+                    <Download size={15} />
+                    Export PDF with Flight
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-4 border-t border-[var(--border-subtle)]">
+                  <div>
+                    <span className="text-[11px] font-bold text-[var(--text-muted)] uppercase tracking-wider">Departure</span>
+                    <p className="text-[15px] font-black text-[var(--text-primary)]">{selectedFlight.departure?.airport || selectedFlight.departure?.iata}</p>
+                    <p className="text-[12.5px] text-[var(--text-secondary)] font-semibold">
+                      {selectedFlight.departure?.scheduled ? new Date(selectedFlight.departure.scheduled).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' }) : 'Scheduled'}
+                    </p>
+                  </div>
+                  <div>
+                    <span className="text-[11px] font-bold text-[var(--text-muted)] uppercase tracking-wider">Arrival</span>
+                    <p className="text-[15px] font-black text-[var(--text-primary)]">{selectedFlight.arrival?.airport || selectedFlight.arrival?.iata}</p>
+                    <p className="text-[12.5px] text-[var(--text-secondary)] font-semibold">
+                      {selectedFlight.arrival?.scheduled ? new Date(selectedFlight.arrival.scheduled).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' }) : 'Scheduled'}
+                    </p>
+                  </div>
+                  <div>
+                    <span className="text-[11px] font-bold text-[var(--text-muted)] uppercase tracking-wider">Flight Specs</span>
+                    <p className="text-[15px] font-black text-[var(--text-primary)]">
+                      {selectedFlight.durationMinutes ? `${Math.floor(selectedFlight.durationMinutes / 60)}h ${selectedFlight.durationMinutes % 60}m` : 'Direct Flight'}
+                      {selectedFlight.aircraft?.iata ? ` · ${selectedFlight.aircraft.iata}` : ''}
+                    </p>
+                    <p className="text-[12px] text-emerald-600 font-bold mt-0.5">✓ Included in PDF Export</p>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+
             {days.map((day, dayIdx) => (
               <motion.div
                 key={day.day}

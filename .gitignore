@@ -37,3 +37,8 @@ target/
 backend/data/
 *.mv.db
 *.trace.db
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class

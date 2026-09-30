@@ -1,4 +1,5 @@
 import { apiClient } from './apiClient'
+import { DESTINATIONS } from '../data/mockData'
 
 // ─── City name extractor ────────────────────────────────────────────────────
 const KNOWN_CITIES: Record<string, string> = {
@@ -255,8 +256,14 @@ export const aiService = {
     try {
       return await apiClient.get<any[]>('/recommendations')
     } catch (e) {
-      console.error(e)
-      return []
+      return DESTINATIONS.filter(d => d.trending).slice(0, 6).map(d => ({
+        id: d.id,
+        name: d.name,
+        state: d.state,
+        country: d.country,
+        imageUrl: d.image || d.imageUrl,
+        avgCost: d.costPerDay || d.avgCost || 3000
+      }))
     }
   },
 

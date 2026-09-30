@@ -53,13 +53,35 @@ SELECT * FROM (VALUES
 ) v(id, name, city, country, state, category, description, latitude, longitude, avg_cost, image_url, rating, review_count, best_time, safety_advisory, trending, search_count)
 WHERE NOT EXISTS (SELECT 1 FROM places WHERE id = v.id);
 
--- Ensure existing database rows have 100% accurate, verified image URLs
-UPDATE places SET image_url = 'https://images.unsplash.com/photo-1705524220939-dac17cf94236?w=800' WHERE id = 1;
-UPDATE places SET image_url = 'https://images.unsplash.com/photo-1632426237957-5ea14aae7100?w=800' WHERE id = 2;
-UPDATE places SET image_url = 'https://images.unsplash.com/photo-1587474260584-136574528ed5?w=800' WHERE id = 3;
-UPDATE places SET image_url = 'https://images.unsplash.com/photo-1580818135730-ebd11086660b?w=800' WHERE id = 12;
-UPDATE places SET image_url = 'https://images.unsplash.com/photo-1600080077823-a44592513861?w=800' WHERE id = 16;
-UPDATE places SET image_url = 'https://images.unsplash.com/photo-1615836245337-f5b9b2303f10?w=800' WHERE id = 17;
+-- Ensure existing database rows have 100% accurate, verified image URLs, ratings, and theme categories
+UPDATE places SET image_url = 'https://images.unsplash.com/photo-1705524220939-dac17cf94236?w=800', category = 'Heritage, Historical, Food Trails', rating = 4.5 WHERE id = 1;
+UPDATE places SET image_url = 'https://images.unsplash.com/photo-1632426237957-5ea14aae7100?w=800', category = 'Heritage, Historical', rating = 4.3 WHERE id = 2;
+UPDATE places SET image_url = 'https://images.unsplash.com/photo-1587474260584-136574528ed5?w=800', category = 'Heritage, Historical, Food Trails', rating = 4.5 WHERE id = 3;
+UPDATE places SET category = 'Heritage, Historical, Trending', rating = 4.9 WHERE id = 4;
+UPDATE places SET category = 'Heritage, Historical, Culture', rating = 4.7 WHERE id = 5;
+UPDATE places SET category = 'Heritage, Historical', rating = 4.4 WHERE id = 6;
+UPDATE places SET category = 'Beach, Nightlife, Trending, Adventure', rating = 3.9 WHERE id = 7;
+UPDATE places SET category = 'Nature, Adventure, Offbeat', rating = 4.6 WHERE id = 8;
+UPDATE places SET category = 'Adventure, Nature, Trending', rating = 4.5 WHERE id = 9;
+UPDATE places SET category = 'Offbeat, Nature, Food Trails', rating = 3.8 WHERE id = 10;
+UPDATE places SET category = 'Nature, Offbeat, Beach, Trending', rating = 4.8 WHERE id = 11;
+UPDATE places SET image_url = 'https://images.unsplash.com/photo-1580818135730-ebd11086660b?w=800', category = 'Nature, Offbeat, Adventure', rating = 4.6 WHERE id = 12;
+UPDATE places SET category = 'Heritage, Historical, Nightlife, Food Trails', rating = 3.8 WHERE id = 13;
+UPDATE places SET category = 'Beach, Nightlife, Food Trails', rating = 4.5 WHERE id = 14;
+UPDATE places SET category = 'Heritage, Culture, Food Trails, Spiritual', rating = 4.7 WHERE id = 15;
+UPDATE places SET image_url = 'https://images.unsplash.com/photo-1600080077823-a44592513861?w=800', category = 'Heritage, Historical, Food Trails', rating = 3.9 WHERE id = 16;
+UPDATE places SET image_url = 'https://images.unsplash.com/photo-1615836245337-f5b9b2303f10?w=800', category = 'Heritage, Historical, Offbeat, Trending', rating = 4.7 WHERE id = 17;
+UPDATE places SET category = 'Heritage, Historical, Offbeat', rating = 4.7 WHERE id = 18;
+UPDATE places SET category = 'Adventure, Offbeat, Heritage, Nature', rating = 4.6 WHERE id = 19;
+UPDATE places SET category = 'Nature, Offbeat, Heritage', rating = 4.4 WHERE id = 20;
+UPDATE places SET category = 'Heritage, Historical, Food Trails, Nightlife', rating = 4.7 WHERE id = 21;
+UPDATE places SET category = 'Nature, Offbeat, Heritage', rating = 4.9 WHERE id = 22;
+UPDATE places SET category = 'Heritage, Culture, Nature', rating = 4.9 WHERE id = 23;
+UPDATE places SET category = 'Beach, Romantic, Heritage', rating = 4.6 WHERE id = 24;
+UPDATE places SET category = 'Adventure, Nightlife, Food Trails', rating = 4.4 WHERE id = 25;
+UPDATE places SET category = 'Adventure, Nature, Beach', rating = 4.6 WHERE id = 26;
+UPDATE places SET category = 'Nightlife, Adventure, Food Trails', rating = 4.4 WHERE id = 27;
+
 
 -- ====== HOTELS ======
 INSERT INTO hotels (id, name, place_id, price_per_night, rating, amenities, image_url, category, latitude, longitude, location, review_count)

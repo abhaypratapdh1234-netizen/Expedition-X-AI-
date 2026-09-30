@@ -11,11 +11,12 @@ import {
   Building2, Navigation, Tag, ChevronRight, Heart, Info,
   Loader2, AlertCircle, ArrowRight,
 } from 'lucide-react'
-import type { FlightData } from '../../../services/flightService'
+import { type FlightData, getCityFromAirport } from '../../../services/flightService'
 import { useFlightStore } from '../../../stores/flightStore'
 import { useBookingStore, type BookingRecord } from '../../../stores/bookingStore'
 import { usePlannerStore } from '../../../stores/plannerStore'
 import { useWishlistStore } from '../../../stores/wishlistStore'
+import { useWizardStore } from '../../../stores/wizardStore'
 import { pageTransition } from '../../../motion/variants'
 
 // ─── Status config ────────────────────────────────────────────────────────────
@@ -180,6 +181,17 @@ export function FlightDetails() {
       selectedFlightIata:  flight.flight?.iata || flight.flight?.number || '',
       selectedFlightLabel: `${flight.airline?.name ?? ''} ${flight.flight?.iata ?? ''} · ${flight.departure?.iata ?? '?'} → ${flight.arrival?.iata ?? '?'}`,
     })
+
+    // Also pre-fill wizardStore for original Trip Setup Wizard (Screenshot 3)
+    const arrivalDest = flight.arrival?.airport || flight.arrival?.iata || ''
+    const place = getCityFromAirport(arrivalDest) || arrivalDest
+    if (place) {
+      useWizardStore.getState().setDestination(place)
+    }
+    const flightDate = flight.departure?.scheduled?.split('T')[0] || flight.flightDate
+    if (flightDate) {
+      useWizardStore.getState().setStartDate(flightDate)
+    }
   }
 
   const handleSaveToBookings = async () => {
@@ -212,7 +224,29 @@ export function FlightDetails() {
   }
 
   const handleContinue = () => {
-    navigate('/app/planner/workspace')
+    // 1. Ensure selected flight is stored in useFlightStore
+    if (flight) {
+      selectFlight(flight)
+    }
+
+    // 2. Prepare the original trip planner wizard (Screenshot 3)
+    const wizard = useWizardStore.getState()
+    wizard.reset()
+    wizard.setStep(1)
+
+    // 3. Pre-fill destination and start date from flight arrival & departure
+    const arrivalDest = flight?.arrival?.airport || flight?.arrival?.iata || ''
+    const place = getCityFromAirport(arrivalDest) || arrivalDest
+    if (place) {
+      wizard.setDestination(place)
+    }
+    const flightDate = flight?.departure?.scheduled?.split('T')[0] || flight?.flightDate
+    if (flightDate) {
+      wizard.setStartDate(flightDate)
+    }
+
+    // 4. Redirect directly to original AI Trip Setup wizard (Screenshot 3)
+    navigate('/app/planner/setup')
   }
 
   return (
@@ -484,23 +518,14 @@ export function FlightDetails() {
             key="post-select"
             initial={{ opacity: 0, scale: 0.97, y: 16 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            style={{
-              padding: '28px 32px', borderRadius: 20,
-              background: 'linear-gradient(135deg, rgba(16,185,129,0.08), rgba(252,108,38,0.04))',
-              border: '1px solid rgba(16,185,129,0.25)',
-              boxShadow: '0 4px 24px rgba(16,185,129,0.08)',
-            }}
+            className="flight-post-select-card"
           >
             <div style={{ display: 'flex', alignItems: 'flex-start', gap: 16, flexWrap: 'wrap' }}>
-              <div style={{
-                width: 44, height: 44, borderRadius: 12, flexShrink: 0,
-                background: 'rgba(16,185,129,0.15)', border: '1px solid rgba(16,185,129,0.3)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-              }}>
-                <CheckCircle2 size={22} color="#34d399" />
+              <div className="flight-post-select-badge">
+                <CheckCircle2 size={22} />
               </div>
               <div style={{ flex: 1, minWidth: 200 }}>
-                <p style={{ color: '#34d399', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.15em', margin: '0 0 4px' }}>
+                <p className="flight-post-select-label" style={{ fontSize: 11, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.15em', margin: '0 0 4px' }}>
                   ✓ Flight Selected
                 </p>
                 <h3 style={{ color: 'var(--text-primary)', fontSize: 17, fontWeight: 800, margin: '0 0 2px', fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
@@ -544,15 +569,7 @@ export function FlightDetails() {
                   onClick={handleContinue}
                   whileHover={{ scale: 1.02, y: -1 }}
                   whileTap={{ scale: 0.98 }}
-                  style={{
-                    display: 'flex', alignItems: 'center', gap: 8,
-                    padding: '11px 22px', borderRadius: 12, cursor: 'pointer',
-                    background: 'linear-gradient(135deg, #10b981, #059669)',
-                    border: 'none', color: 'white',
-                    fontSize: 14, fontWeight: 800,
-                    boxShadow: '0 6px 20px rgba(16,185,129,0.3)',
-                    fontFamily: "'Plus Jakarta Sans', sans-serif",
-                  }}
+                  className="flight-continue-btn"
                 >
                   Continue to Trip Planner
                   <ArrowRight size={14} />
@@ -589,6 +606,52 @@ export function FlightDetails() {
           border-color: var(--amber-500);
           color: var(--amber-500);
         }
+        /* ── Post-Selection Card & Elements (All Themes) ── */
+        .flight-post-select-card {
+          padding: 28px 32px;
+          border-radius: 20px;
+          background: var(--bg-card);
+          border: 1.5px solid #000000;
+          box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+        }
+        .flight-post-select-badge {
+          width: 44px;
+          height: 44px;
+          border-radius: 12px;
+          flex-shrink: 0;
+          background: #000000;
+          border: 1.5px solid #000000;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+        .flight-post-select-badge svg {
+          color: #ffffff;
+        }
+        .flight-post-select-label {
+          color: #000000;
+        }
+        .flight-continue-btn {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          padding: 11px 22px;
+          border-radius: 12px;
+          cursor: pointer;
+          background: #000000;
+          border: 1.5px solid #000000;
+          color: #ffffff;
+          font-size: 14px;
+          font-weight: 800;
+          box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+          font-family: 'Plus Jakarta Sans', sans-serif;
+          transition: all 0.2s ease;
+        }
+        .flight-continue-btn:hover {
+          background: #1f2937;
+          border-color: #1f2937;
+          box-shadow: 0 6px 22px rgba(0, 0, 0, 0.35);
+        }
         .flight-saved-btn {
           display: flex;
           align-items: center;
@@ -598,37 +661,87 @@ export function FlightDetails() {
           font-size: 13.5px;
           font-weight: 800;
           transition: all 0.2s ease;
-          background: #d1fae5;
-          border: 1.5px solid #059669;
-          color: #065f46;
-          box-shadow: 0 2px 8px rgba(5, 150, 105, 0.16);
+          background: #000000;
+          border: 1.5px solid #000000;
+          color: #ffffff;
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.16);
           cursor: default;
         }
         .flight-saved-btn svg {
-          color: #059669;
-          fill: #10b981;
+          color: #ffffff;
+          fill: #ffffff;
         }
         .flight-saved-text {
-          color: #065f46;
+          color: #000000;
         }
         .flight-saved-text svg {
-          color: #059669;
+          color: #000000;
+        }
+
+        /* ── Dark Theme Overrides ── */
+        [data-theme='dark'] .flight-post-select-card {
+          background: var(--bg-card);
+          border: 1.5px solid rgba(255, 255, 255, 0.3);
+          box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
+        }
+        [data-theme='dark'] .flight-post-select-badge {
+          background: #000000;
+          border: 1.5px solid rgba(255, 255, 255, 0.35);
+        }
+        [data-theme='dark'] .flight-post-select-badge svg {
+          color: #ffffff;
+        }
+        [data-theme='dark'] .flight-post-select-label {
+          color: #ffffff;
+        }
+        [data-theme='dark'] .flight-continue-btn {
+          background: #000000;
+          border: 1.5px solid rgba(255, 255, 255, 0.35);
+          color: #ffffff;
+          box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+        }
+        [data-theme='dark'] .flight-continue-btn:hover {
+          background: #111827;
+          border-color: #ffffff;
         }
         [data-theme='dark'] .flight-saved-btn {
-          background: rgba(16, 185, 129, 0.2);
-          border-color: #34d399;
-          color: #34d399;
-          box-shadow: 0 0 14px rgba(16, 185, 129, 0.3);
+          background: #000000;
+          border-color: rgba(255, 255, 255, 0.35);
+          color: #ffffff;
+          box-shadow: 0 0 14px rgba(0, 0, 0, 0.5);
         }
         [data-theme='dark'] .flight-saved-btn svg {
-          color: #34d399;
-          fill: #34d399;
+          color: #ffffff;
+          fill: #ffffff;
         }
         [data-theme='dark'] .flight-saved-text {
-          color: #34d399;
+          color: #ffffff;
         }
         [data-theme='dark'] .flight-saved-text svg {
-          color: #34d399;
+          color: #ffffff;
+        }
+
+        /* ── Monochrome Theme Overrides ── */
+        [data-theme='monochrome'] .flight-post-select-card {
+          background: var(--bg-card);
+          border: 1.5px solid #000000;
+          box-shadow: none;
+        }
+        [data-theme='monochrome'] .flight-post-select-badge {
+          background: #000000;
+          border: 1.5px solid #000000;
+        }
+        [data-theme='monochrome'] .flight-post-select-badge svg {
+          color: #ffffff;
+        }
+        [data-theme='monochrome'] .flight-post-select-label {
+          color: #000000;
+        }
+        [data-theme='monochrome'] .flight-continue-btn {
+          background: #000000;
+          border: 1.5px solid #000000;
+          color: #ffffff;
+          box-shadow: none;
         }
         [data-theme='monochrome'] .flight-saved-btn {
           background: #ffffff;
@@ -641,10 +754,10 @@ export function FlightDetails() {
           fill: #000000;
         }
         [data-theme='monochrome'] .flight-saved-text {
-          color: #ffffff;
+          color: #000000;
         }
         [data-theme='monochrome'] .flight-saved-text svg {
-          color: #ffffff;
+          color: #000000;
         }
       `}</style>
     </motion.div>

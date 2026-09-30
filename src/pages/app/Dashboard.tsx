@@ -10,7 +10,7 @@ import { useAuthStore } from '../../stores/authStore'
 import { useSettingsStore } from '../../stores/settingsStore'
 import { formatCurrency, t } from '../../utils/formatters'
 import { placeService } from '../../services/placeService'
-import type { PlaceResponse } from '../../services/placeService'
+import { DESTINATIONS } from '../../data/mockData'
 import { GlowingEffect } from '@/components/ui/glowing-effect'
 import { useIntelligenceStore } from '../../stores/intelligenceStore'
 import { useTripStore } from '../../stores/tripStore'
@@ -111,8 +111,27 @@ export function Dashboard() {
 
   const { currency, language } = useSettingsStore()
   const navigate = useNavigate()
-  const [loading, setLoading] = useState(true)
-  const [recommendedDests, setRecommendedDests] = useState<PlaceResponse[]>([])
+  const [loading, setLoading] = useState(false)
+  const [recommendedDests, setRecommendedDests] = useState<any[]>(() =>
+    DESTINATIONS.filter(d => d.trending).slice(0, 4).map(d => ({
+      id: d.id,
+      name: d.name,
+      city: d.city || d.name,
+      country: d.country || 'India',
+      state: d.state || '',
+      category: Array.isArray(d.category) ? d.category.join(', ') : (d.category || 'Trending'),
+      description: d.description || '',
+      latitude: d.latitude || d.lat || 0,
+      longitude: d.longitude || d.lng || 0,
+      avgCost: d.avgCost || d.costPerDay || 2500,
+      imageUrl: d.imageUrl || d.image || '',
+      rating: d.rating || 4.8,
+      reviewCount: d.reviewCount || d.reviews || 1200,
+      bestTime: d.bestTime || 'Year-round',
+      safetyAdvisory: 'Safe for tourists',
+      trending: true
+    }))
+  )
   const [activeTourIndex, setActiveTourIndex] = useState(0)
 
   // Mini Chatbot State

@@ -50,10 +50,10 @@ export function ScamCard({ warning, onVote }: ScamCardProps) {
         <div className="flex-1 min-w-0">
           <div className="flex items-start justify-between gap-2">
             <div>
-              <span className="text-[11px] font-black uppercase tracking-widest text-[#FC6C26] block">
+              <span className="text-[10px] font-black uppercase tracking-wider text-black dark:text-neutral-200 bg-neutral-100 dark:bg-neutral-800 px-2 py-0.5 rounded border border-black/10 dark:border-white/10 inline-block">
                 {warning.category}
               </span>
-              <p className="text-[13px] font-black text-[var(--text-primary)] mt-0.5">
+              <p className="text-[13px] font-black text-[var(--text-primary)] mt-1">
                 📍 {warning.location}
               </p>
             </div>
@@ -84,9 +84,9 @@ export function ScamCard({ warning, onVote }: ScamCardProps) {
                 <span className="text-[10px] font-black uppercase tracking-widest text-[#9ca3af]">
                   TF-IDF Classifier
                 </span>
-                <div className="h-1.5 rounded-full bg-gray-100 flex-1">
+                <div className="h-1.5 rounded-full bg-gray-200 dark:bg-neutral-700 flex-1">
                   <div
-                    className="h-full rounded-full bg-[#FC6C26]"
+                    className="h-full rounded-full bg-black dark:bg-white"
                     style={{ width: `${Math.round(warning.confidence * 100)}%` }}
                   />
                 </div>

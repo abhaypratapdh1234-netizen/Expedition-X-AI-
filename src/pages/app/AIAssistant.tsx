@@ -7,7 +7,7 @@ const JOTFORM_AGENT_ID = '019f7b5c2ff8700084d42bce570d5896f70d'
 const JOTFORM_DIRECT_URL = `https://www.jotform.com/agent/${JOTFORM_AGENT_ID}?skipWelcome=1&maximizable=1`
 
 export function AIAssistant() {
-  const [activeTab, setActiveTab] = useState<'jotform' | 'command'>('jotform')
+  const [activeTab, setActiveTab] = useState<'command' | 'jotform'>('command')
   const [iframeKey, setIframeKey] = useState(0)
 
   return (
@@ -17,7 +17,36 @@ export function AIAssistant() {
         
         {/* ── LEFT SIDE: TWO SEPARATE STANDALONE BLACK PILL BUTTONS (NO JOINT CONTAINER) ── */}
         <div className="flex items-center gap-3 sm:gap-4 select-none">
-          {/* Button 1: Standalone MAX AI Chatbot Pill */}
+          {/* Button 1: Standalone Command Center Pill */}
+          <motion.button
+            whileHover={{ scale: 1.03, y: -1 }}
+            whileTap={{ scale: 0.97 }}
+            onClick={() => setActiveTab('command')}
+            className="relative flex items-center gap-3 px-6 sm:px-7 py-3 sm:py-3.5 rounded-full text-[15px] sm:text-[16px] font-black transition-all cursor-pointer select-none"
+            style={{
+              backgroundColor: '#000000',
+              color: activeTab === 'command' ? '#ffffff' : '#a1a1aa',
+              border: activeTab === 'command' ? '2px solid #ffffff' : '2px solid #27272a',
+              boxShadow: activeTab === 'command'
+                ? '0 8px 28px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(255, 255, 255, 0.3)'
+                : '0 4px 16px rgba(0, 0, 0, 0.25)',
+              opacity: activeTab === 'command' ? 1 : 0.82
+            }}
+            title="Open AI Command Center"
+          >
+            <div
+              className={`p-1.5 rounded-lg transition-colors ${
+                activeTab === 'command' ? 'bg-white text-black' : 'bg-zinc-800 text-zinc-400'
+              }`}
+            >
+              <Terminal size={18} className={activeTab === 'command' ? 'text-black' : 'text-zinc-400'} />
+            </div>
+            <span className={`tracking-tight font-display text-[15px] sm:text-[16px] ${activeTab === 'command' ? 'text-white' : 'text-zinc-300'}`}>
+              Command Center
+            </span>
+          </motion.button>
+
+          {/* Button 2: Standalone MAX AI Chatbot Pill */}
           <motion.button
             whileHover={{ scale: 1.03, y: -1 }}
             whileTap={{ scale: 0.97 }}
@@ -46,35 +75,6 @@ export function AIAssistant() {
                 MAX AI Chatbot
               </span>
             </div>
-          </motion.button>
-
-          {/* Button 2: Standalone Command Center Pill */}
-          <motion.button
-            whileHover={{ scale: 1.03, y: -1 }}
-            whileTap={{ scale: 0.97 }}
-            onClick={() => setActiveTab('command')}
-            className="relative flex items-center gap-3 px-6 sm:px-7 py-3 sm:py-3.5 rounded-full text-[15px] sm:text-[16px] font-black transition-all cursor-pointer select-none"
-            style={{
-              backgroundColor: '#000000',
-              color: activeTab === 'command' ? '#ffffff' : '#a1a1aa',
-              border: activeTab === 'command' ? '2px solid #ffffff' : '2px solid #27272a',
-              boxShadow: activeTab === 'command'
-                ? '0 8px 28px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(255, 255, 255, 0.3)'
-                : '0 4px 16px rgba(0, 0, 0, 0.25)',
-              opacity: activeTab === 'command' ? 1 : 0.82
-            }}
-            title="Open AI Command Center"
-          >
-            <div
-              className={`p-1.5 rounded-lg transition-colors ${
-                activeTab === 'command' ? 'bg-white text-black' : 'bg-zinc-800 text-zinc-400'
-              }`}
-            >
-              <Terminal size={18} className={activeTab === 'command' ? 'text-black' : 'text-zinc-400'} />
-            </div>
-            <span className={`tracking-tight font-display text-[15px] sm:text-[16px] ${activeTab === 'command' ? 'text-white' : 'text-zinc-300'}`}>
-              Command Center
-            </span>
           </motion.button>
         </div>
 

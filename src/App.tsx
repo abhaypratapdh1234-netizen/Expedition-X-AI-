@@ -87,6 +87,7 @@ const SupportChat = lazy(() => import('./pages/app/SupportChat').then(module => 
 const AdminDashboard = lazy(() => import('./pages/app/AdminDashboard').then(module => ({ default: module.AdminDashboard })))
 const SettingsPage = lazy(() => import('./pages/app/settings/SettingsPage').then(module => ({ default: module.SettingsPage })))
 const OfflinePage = lazy(() => import('./pages/error/OfflinePage').then(module => ({ default: module.OfflinePage })))
+const InviteJoinPage = lazy(() => import('./pages/InviteJoinPage'))
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated)
@@ -123,6 +124,9 @@ export default function App() {
             <Route path="/cookies" element={<CookiesPage />} />
           </Route>
 
+          {/* Invite Join — publicly accessible (no auth required) */}
+          <Route path="/join" element={<InviteJoinPage />} />
+
           {/* App Routes (Protected) */}
           <Route
             path="/app"
@@ -144,7 +148,7 @@ export default function App() {
             <Route path="explore/place/:id" element={<PlaceDetailPage />} />
 
             {/* Trip Planner */}
-            <Route path="planner/workspace" element={<TripPlannerWorkspace />} />
+            <Route path="planner/workspace" element={<Navigate to="/app/planner/setup" replace />} />
             <Route path="planner/setup" element={<TripSetupWizard />} />
             <Route path="planner/itinerary" element={<ItineraryBuilder />} />
             <Route path="planner/map" element={<MapGuide />} />

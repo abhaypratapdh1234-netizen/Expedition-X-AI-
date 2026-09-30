@@ -10,6 +10,8 @@ import { computeWishlistMatchScore } from '../../services/intelligenceService'
 import { useTripStore } from '../../stores/tripStore'
 import { useBookingStore } from '../../stores/bookingStore'
 import { useAuthStore } from '../../stores/authStore'
+import { useFlightStore } from '../../stores/flightStore'
+import { useWizardStore } from '../../stores/wizardStore'
 
 export function WishlistPage() {
   const navigate = useNavigate()
@@ -476,7 +478,19 @@ export function WishlistPage() {
                         </button>
 
                         <button
-                          onClick={() => navigate('/app/planner/workspace', { state: { destination: f.arrival?.airport || f.arrival?.iata, flight: f } })}
+                          onClick={() => {
+                            if (f) {
+                              useFlightStore.getState().selectFlight(f)
+                              const ws = useWizardStore.getState()
+                              ws.reset()
+                              ws.setStep(1)
+                              const arrivalDest = f.arrival?.airport || f.arrival?.iata || ''
+                              if (arrivalDest) ws.setDestination(arrivalDest)
+                              const depDate = f.departure?.scheduled?.split('T')[0] || f.flightDate
+                              if (depDate) ws.setStartDate(depDate)
+                            }
+                            navigate('/app/planner/setup')
+                          }}
                           className="flex-1 py-3 rounded-[16px] text-[13px] font-extrabold uppercase tracking-wider text-white transition-all cursor-pointer flex items-center justify-center gap-1.5"
                           style={{ background: 'linear-gradient(135deg, #FC6C26, #E05818)', boxShadow: '0 4px 15px rgba(252, 108, 38, 0.35)' }}
                         >

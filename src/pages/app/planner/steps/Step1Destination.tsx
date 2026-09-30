@@ -250,7 +250,7 @@ export function Step1Destination() {
               <div className="p-4 space-y-4">
                 {/* Vibes */}
                 <div>
-                  <p className="text-[11px] font-black uppercase tracking-widest text-[var(--text-muted)] mb-2">Travel Vibe</p>
+                  <p className="text-[12px] font-black uppercase tracking-wider text-[var(--text-primary)] mb-2">Travel Vibe</p>
                   <div className="flex flex-wrap gap-2">
                     {VIBE_OPTIONS.map(v => {
                       const isSelected = filters.vibes?.includes(v.label)
@@ -258,10 +258,10 @@ export function Step1Destination() {
                         <button
                           key={v.label}
                           onClick={() => toggleVibe(v.label)}
-                          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[12px] font-black border transition-all ${
+                          className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-[13px] font-extrabold border transition-all ${
                             isSelected
                               ? 'bg-[#FC6C26] text-white border-[#FC6C26] shadow-md'
-                              : 'bg-[var(--bg-card)] text-[var(--text-muted)] border-[var(--border-subtle)] hover:border-[#FC6C26]/40'
+                              : 'bg-[var(--bg-card)] text-[var(--text-primary)] border-[var(--border-subtle)] hover:border-[#FC6C26]/40'
                           }`}
                         >
                           <span>{v.emoji}</span> {v.label}
@@ -273,7 +273,7 @@ export function Step1Destination() {
 
                 {/* Budget */}
                 <div>
-                  <p className="text-[11px] font-black uppercase tracking-widest text-[var(--text-muted)] mb-2">
+                  <p className="text-[12px] font-black uppercase tracking-wider text-[var(--text-primary)] mb-2">
                     Budget per day · <span className="text-[#FC6C26]">₹{filters.budgetPerDay?.toLocaleString()}/day</span>
                   </p>
                   <div className="flex gap-2">
@@ -281,10 +281,10 @@ export function Step1Destination() {
                       <button
                         key={b.value}
                         onClick={() => setFilters(f => ({ ...f, budgetPerDay: b.value }))}
-                        className={`flex-1 px-3 py-2 rounded-xl text-[12px] font-black border transition-all ${
+                        className={`flex-1 px-3 py-2.5 rounded-xl text-[13px] font-black border transition-all ${
                           filters.budgetPerDay === b.value
                             ? 'bg-[#FC6C26]/10 border-[#FC6C26] text-[#FC6C26]'
-                            : 'bg-[var(--bg-card)] border-[var(--border-subtle)] text-[var(--text-muted)]'
+                            : 'bg-[var(--bg-card)] border-[var(--border-subtle)] text-[var(--text-primary)]'
                         }`}
                       >
                         {b.emoji} {b.label}
@@ -295,7 +295,7 @@ export function Step1Destination() {
 
                 {/* Flight time */}
                 <div>
-                  <p className="text-[11px] font-black uppercase tracking-widest text-[var(--text-muted)] mb-2">
+                  <p className="text-[12px] font-black uppercase tracking-wider text-[var(--text-primary)] mb-2">
                     Max flight time · <span className="text-[#FC6C26]">{filters.maxFlightHours}h</span>
                   </p>
                   <input
@@ -306,7 +306,7 @@ export function Step1Destination() {
                     onChange={e => setFilters(f => ({ ...f, maxFlightHours: Number(e.target.value) }))}
                     className="w-full accent-[#FC6C26]"
                   />
-                  <div className="flex justify-between text-[10px] text-[#9ca3af] mt-1">
+                  <div className="flex justify-between text-[11px] font-bold text-[var(--text-secondary)] mt-1">
                     <span>1h</span><span>6h</span><span>12h</span>
                   </div>
                 </div>
@@ -327,11 +327,11 @@ export function Step1Destination() {
       {/* Results */}
       <div className="text-left space-y-4">
         {results.length > 0 && (
-          <div className="flex items-center justify-between mb-2 px-2">
-            <h3 className="text-[14px] font-black text-[var(--text-primary)]">
+          <div className="flex items-center justify-between mb-3 px-2">
+            <h3 className="text-[16px] font-black text-[var(--text-primary)] tracking-tight">
               {results.length} destinations ranked by match score
             </h3>
-            <span className="text-[10px] text-[var(--text-muted)] hidden sm:block">
+            <span className="text-[12px] font-bold text-[var(--text-primary)]/75 hidden sm:block">
               Algorithm: weighted scoring · Budget(25) + Vibe(35) + Flight(20) + Season(20)
             </span>
           </div>
@@ -344,56 +344,56 @@ export function Step1Destination() {
             ))}
           </div>
         ) : (
-          <div className="grid grid-cols-1 gap-3">
-            {results.slice(0, 8).map((dest, idx) => (
+          <div className="grid grid-cols-1 gap-3.5">
+            {results.slice(0, 15).map((dest, idx) => (
               <motion.div
                 key={dest.id}
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: idx * 0.04 }}
+                transition={{ delay: idx * 0.03 }}
                 onClick={() => handleSelect(dest)}
-                className={`bg-[var(--bg-card)] rounded-2xl border p-4 cursor-pointer transition-all duration-200 hover:shadow-md ${
+                className={`bg-[var(--bg-card)] rounded-2xl border-2 p-4 sm:p-5 cursor-pointer transition-all duration-200 hover:shadow-lg ${
                   selected === dest.id
-                    ? 'border-[#FC6C26] shadow-[0_0_0_2px_rgba(252,108,38,0.2)]'
-                    : 'border-[var(--border-subtle)] hover:border-[#FC6C26]/30'
+                    ? 'border-black dark:border-white shadow-[0_0_0_2px_rgba(0,0,0,0.2)] dark:shadow-[0_0_0_2px_rgba(255,255,255,0.3)]'
+                    : 'border-black/15 dark:border-white/15 hover:border-black/40 dark:hover:border-white/40'
                 }`}
               >
                 <div className="flex items-start gap-4">
-                  {/* Emoji & score */}
-                  <div className="text-3xl shrink-0">{dest.emoji}</div>
+                  {/* Emoji */}
+                  <div className="text-3xl shrink-0 p-1.5 bg-black/[0.03] dark:bg-white/[0.05] rounded-xl border border-black/5 dark:border-white/10">{dest.emoji}</div>
 
                   {/* Info */}
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-start justify-between gap-2">
+                    <div className="flex items-start justify-between gap-3">
                       <div>
-                        <p className="text-[16px] font-black text-[var(--text-primary)]">{dest.name}</p>
-                        <p className="text-[12px] text-[var(--text-muted)]">{dest.region} · {dest.country}</p>
+                        <p className="text-[18px] font-black text-[var(--text-primary)] tracking-tight">{dest.name}</p>
+                        <p className="text-[13.5px] font-bold text-[var(--text-primary)]/80 mt-0.5">{dest.region} · {dest.country}</p>
                       </div>
-                      {/* Match score */}
-                      <div className={`shrink-0 flex flex-col items-center px-3 py-1.5 rounded-xl ${
-                        dest.matchScore >= 80 ? 'bg-green-50 border border-green-200' :
-                        dest.matchScore >= 60 ? 'bg-amber-50 border border-amber-200' :
-                        'bg-gray-50 border border-[var(--border-subtle)]'
-                      }`}>
-                        <span className={`text-[18px] font-black ${
-                          dest.matchScore >= 80 ? 'text-green-700' :
-                          dest.matchScore >= 60 ? 'text-amber-700' : 'text-[var(--text-muted)]'
-                        }`}>{dest.matchScore}%</span>
-                        <span className="text-[9px] font-black text-[#9ca3af] uppercase tracking-wider">match</span>
+                      
+                      {/* Match score - Black High Contrast Badge */}
+                      <div className="shrink-0 flex flex-col items-center px-3.5 py-1.5 rounded-2xl bg-black/[0.05] dark:bg-neutral-800/90 border-2 border-black dark:border-white/40 shadow-sm">
+                        <span className="text-[19px] font-black text-black dark:text-white leading-tight">
+                          {dest.matchScore}%
+                        </span>
+                        <span className="text-[10px] font-black text-black/85 dark:text-white/85 uppercase tracking-widest mt-0.5">
+                          match
+                        </span>
                       </div>
                     </div>
 
-                    <p className="text-[12px] text-[var(--text-muted)] mt-1.5 line-clamp-1">{dest.description}</p>
+                    <p className="text-[14px] font-semibold text-[var(--text-primary)]/90 mt-2 line-clamp-1">
+                      {dest.description}
+                    </p>
 
-                    <div className="flex items-center gap-3 mt-2 flex-wrap">
-                      <span className="flex items-center gap-1 text-[11px] text-[var(--text-muted)]">
-                        <Wallet size={11} />₹{dest.budgetMin.toLocaleString()}–{dest.budgetMax.toLocaleString()}/day
+                    <div className="flex items-center gap-4 mt-3 flex-wrap">
+                      <span className="flex items-center gap-1.5 text-[13px] font-extrabold text-[var(--text-primary)]">
+                        <Wallet size={14} className="text-[#FC6C26]" />₹{dest.budgetMin.toLocaleString()}–{dest.budgetMax.toLocaleString()}/day
                       </span>
-                      <span className="flex items-center gap-1 text-[11px] text-[var(--text-muted)]">
-                        <Clock size={11} />{dest.flightHours}h flight
+                      <span className="flex items-center gap-1.5 text-[13px] font-extrabold text-[var(--text-primary)]">
+                        <Clock size={14} className="text-[#FC6C26]" />{dest.flightHours}h flight
                       </span>
                       {dest.matchedFilters.slice(0, 2).map(f => (
-                        <span key={f} className="px-2 py-0.5 rounded-full bg-[#FC6C26]/10 text-[#FC6C26] text-[10px] font-black">
+                        <span key={f} className="px-2.5 py-1 rounded-full bg-[#FC6C26]/15 text-[#D94F0C] dark:text-[#FC6C26] text-[11px] font-black border border-[#FC6C26]/20">
                           ✓ {f}
                         </span>
                       ))}
@@ -407,7 +407,7 @@ export function Step1Destination() {
       </div>
 
       {/* Source attribution */}
-      <p className="text-[10px] text-[#9ca3af] text-center mt-8">
+      <p className="text-[11.5px] font-bold text-[var(--text-primary)]/75 text-center mt-8">
         Scoring: 15-destination seed dataset · REST Countries metadata · Season-aware weighting · No ML — transparent algorithm
       </p>
 
@@ -420,7 +420,7 @@ export function Step1Destination() {
         >
           <button
             onClick={handleContinue}
-            className="flex items-center gap-3 px-8 py-4 rounded-[16px] text-[16px] font-black tracking-tight transition-all shadow-lg border-2 bg-[var(--text-primary)] border-[var(--text-primary)] text-[var(--bg-primary)] hover:bg-[#FC6C26] hover:border-[#FC6C26] hover:text-white"
+            className="flex items-center gap-3 px-8 py-4 rounded-[16px] text-[16px] font-black tracking-tight transition-all shadow-xl border-2 bg-black text-white border-black dark:border-neutral-700 hover:bg-neutral-900 cursor-pointer select-none active:scale-[0.99]"
           >
             Continue to Route <ArrowRight size={18} />
           </button>

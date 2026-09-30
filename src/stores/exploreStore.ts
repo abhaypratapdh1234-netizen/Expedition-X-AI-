@@ -8,6 +8,7 @@ interface ExploreState {
   filters: SearchFilters
   
   setFilters: (filters: Partial<SearchFilters>) => void
+  resetFilters: () => void
   performSearch: () => Promise<void>
 }
 
@@ -20,9 +21,17 @@ export const useExploreStore = create<ExploreState>((set, get) => ({
     set(state => ({ filters: { ...state.filters, ...newFilters } }))
     get().performSearch()
   },
+
+  resetFilters: () => {
+    set({ filters: {} })
+    get().performSearch()
+  },
   
   performSearch: async () => {
-    set({ isSearching: true })
+    const hasData = get().searchResults.length > 0
+    if (!hasData) {
+      set({ isSearching: true })
+    }
     try {
       const results = await placeService.searchDestinations(get().filters)
       set({ searchResults: results, isSearching: false })

@@ -2,8 +2,8 @@ import { useEffect, useState, useRef } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { buttonInteraction, cardInteraction, iconButtonInteraction } from '../../../motion/variants'
-import { Search, Grid, List, Star, MapPin, Heart, TrendingUp, ChevronRight, ChevronDown, SlidersHorizontal, Sparkles, X } from 'lucide-react'
-import { THEMES } from '../../../data/mockData'
+import { Search, Grid, List, Star, MapPin, Heart, TrendingUp, ChevronRight, ChevronDown, SlidersHorizontal, Sparkles, X, RotateCcw, ArrowUpDown, Filter } from 'lucide-react'
+import { THEMES, DESTINATIONS } from '../../../data/mockData'
 import { useExploreStore } from '../../../stores/exploreStore'
 import { useWishlistStore } from '../../../stores/wishlistStore'
 import { useSettingsStore } from '../../../stores/settingsStore'
@@ -14,9 +14,16 @@ import { pageTransition, staggerContainer, itemPop, cardHover } from '../../../m
 import { springSnappy } from '../../../motion/tokens'
 import { GlowingEffect } from '@/components/ui/glowing-effect'
 
+const RATING_OPTIONS = [
+  { value: 0, label: 'Any' },
+  { value: 3, label: '3+' },
+  { value: 4, label: '4+' },
+  { value: 4.5, label: '4.5+' },
+]
+
 export function ExplorePage() {
   const navigate = useNavigate()
-  const { searchResults, isSearching, filters, setFilters, performSearch } = useExploreStore()
+  const { searchResults, isSearching, filters, setFilters, resetFilters, performSearch } = useExploreStore()
   const { savedPlaceIds, fetchWishlist, toggleSaved } = useWishlistStore()
   const { language, currency } = useSettingsStore()
   const theme = useThemeStore(s => s.theme)
@@ -27,8 +34,30 @@ export function ExplorePage() {
   const [view, setView] = useState<'grid' | 'list'>('grid')
   const [localSearch, setLocalSearch] = useState(filters.query || '')
   const [isSurprising, setIsSurprising] = useState(false)
-  const [recommendations, setRecommendations] = useState<any[]>([])
+  const [recommendations, setRecommendations] = useState<any[]>(() =>
+    DESTINATIONS.filter(d => d.trending).slice(0, 6).map(d => ({
+      id: d.id,
+      name: d.name,
+      state: d.state,
+      country: d.country,
+      imageUrl: d.image || d.imageUrl,
+      avgCost: d.costPerDay || d.avgCost || 3000
+    }))
+  )
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false)
+
+  const handleResetFilters = () => {
+    setLocalSearch('')
+    resetFilters()
+  }
+
+  const hasActiveFilters = Boolean(
+    filters.category || 
+    filters.country || 
+    (filters.minRating && filters.minRating > 0) || 
+    localSearch.trim() ||
+    (filters.sortBy && filters.sortBy !== 'recommended')
+  )
   
   // Debounce search
   useEffect(() => {
@@ -236,10 +265,121 @@ export function ExplorePage() {
         })}
       </div>
 
-      {/* Results */}
-      <p className="text-[16px] font-bold antialiased mb-6 text-[var(--text-primary)] uppercase tracking-widest">
-        {isSearching ? t('Searching...', language) : `${searchResults.length} ${t('destinations found', language)}`}
-      </p>
+      {/* Quick Controls Bar: Minimum Rating & Sort By */}
+      <div className="flex flex-wrap items-center justify-between gap-4 mb-6 p-4 rounded-[24px] bg-[var(--bg-card)] border border-[var(--border-subtle)] shadow-sm">
+        <div className="flex flex-wrap items-center gap-3">
+          <span className="text-[12px] font-extrabold uppercase tracking-widest text-[var(--text-muted)] flex items-center gap-1.5">
+            <Star size={14} className="text-amber-500 fill-amber-500" /> {t('Minimum Rating', language)}:
+          </span>
+          <div className="flex items-center gap-2">
+            {RATING_OPTIONS.map(rating => {
+              const isRatingActive = filters.minRating === rating.value || (rating.value === 0 && !filters.minRating)
+              return (
+                <button 
+                  key={rating.value}
+                  onClick={() => setFilters({ minRating: rating.value === 0 ? undefined : rating.value })}
+                  className={`py-2 px-4 rounded-[14px] text-[13px] font-bold antialiased transition-all border flex items-center justify-center gap-1 cursor-pointer ${isRatingActive ? (isMonochrome || isDark || isLight ? 'bg-[var(--text-primary)] text-[var(--bg-primary)] border-[var(--text-primary)]' : 'bg-[#111827] text-white border-[#111827] shadow-sm') : 'bg-[var(--bg-secondary)] text-[var(--text-secondary)] border-[var(--border-subtle)] hover:border-[var(--text-primary)]'}`}
+                >
+                  {rating.value === 0 ? t('Any', language) : <>{rating.value}+ <Star size={12} className={isRatingActive && (!isMonochrome && !isDark && !isLight) ? 'text-[#FC6C26] fill-[#FC6C26]' : 'text-[var(--text-secondary)] fill-[var(--text-secondary)]'} /></>}
+                </button>
+              )
+            })}
+          </div>
+        </div>
+
+        <div className="flex items-center gap-3">
+          <span className="text-[12px] font-extrabold uppercase tracking-widest text-[var(--text-muted)] flex items-center gap-1">
+            <ArrowUpDown size={14} /> {t('Sort', language)}:
+          </span>
+          <select
+            value={filters.sortBy || 'recommended'}
+            onChange={e => setFilters({ sortBy: e.target.value as any })}
+            className="bg-[var(--bg-secondary)] text-[var(--text-primary)] border border-[var(--border-subtle)] px-4 py-2 rounded-[14px] text-[13px] font-bold outline-none cursor-pointer"
+          >
+            <option value="recommended">{t('Featured', language)}</option>
+            <option value="rating">{t('Highest Rated (5★ → 1★)', language)}</option>
+            <option value="cost_asc">{t('Cost: Low to High', language)}</option>
+            <option value="cost_desc">{t('Cost: High to Low', language)}</option>
+            <option value="name">{t('Name: A to Z', language)}</option>
+          </select>
+        </div>
+      </div>
+
+      {/* Active Filters Summary */}
+      {hasActiveFilters && (
+        <div className="flex flex-wrap items-center gap-2 mb-6 p-3 rounded-[16px] bg-[var(--bg-card)] border border-[var(--border-subtle)]">
+          <span className="text-[12px] font-bold uppercase tracking-wider text-[var(--text-muted)] flex items-center gap-1 mr-1">
+            <Filter size={13} /> {t('Active Filters', language)}:
+          </span>
+          {filters.country && (
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[12px] font-bold bg-[var(--bg-secondary)] text-[var(--text-primary)] border border-[var(--border-subtle)] shadow-sm">
+              {filters.country === 'foreign' ? 'Other Foreign' : filters.country}
+              <button onClick={() => setFilters({ country: undefined })} className="hover:text-red-500 cursor-pointer"><X size={12} /></button>
+            </span>
+          )}
+          {filters.category && (
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[12px] font-bold bg-[var(--bg-secondary)] text-[var(--text-primary)] border border-[var(--border-subtle)] shadow-sm">
+              {t(filters.category, language)}
+              <button onClick={() => setFilters({ category: undefined })} className="hover:text-red-500 cursor-pointer"><X size={12} /></button>
+            </span>
+          )}
+          {filters.minRating && (
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[12px] font-bold bg-[var(--bg-secondary)] text-[var(--text-primary)] border border-[var(--border-subtle)] shadow-sm">
+              ⭐ {filters.minRating}+ Rating
+              <button onClick={() => setFilters({ minRating: undefined })} className="hover:text-red-500 cursor-pointer"><X size={12} /></button>
+            </span>
+          )}
+          {localSearch.trim() && (
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[12px] font-bold bg-[var(--bg-secondary)] text-[var(--text-primary)] border border-[var(--border-subtle)] shadow-sm">
+              "{localSearch}"
+              <button onClick={() => { setLocalSearch(''); setFilters({ query: '' }); }} className="hover:text-red-500 cursor-pointer"><X size={12} /></button>
+            </span>
+          )}
+          {filters.sortBy && filters.sortBy !== 'recommended' && (
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[12px] font-bold bg-[var(--bg-secondary)] text-[var(--text-primary)] border border-[var(--border-subtle)] shadow-sm">
+              Sorted: {filters.sortBy}
+              <button onClick={() => setFilters({ sortBy: undefined })} className="hover:text-red-500 cursor-pointer"><X size={12} /></button>
+            </span>
+          )}
+          <button 
+            onClick={handleResetFilters}
+            className="ml-auto flex items-center gap-1 text-[12px] font-bold text-red-500 hover:text-red-600 px-3 py-1 rounded-lg hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors cursor-pointer"
+          >
+            <RotateCcw size={12} /> {t('Reset All', language)}
+          </button>
+        </div>
+      )}
+
+      {/* Results Count */}
+      <div className="flex justify-between items-center mb-6">
+        <p className="text-[16px] font-bold antialiased text-[var(--text-primary)] uppercase tracking-widest">
+          {isSearching ? t('Searching...', language) : `${searchResults.length} ${t('destinations found', language)}`}
+        </p>
+      </div>
+
+      {/* Empty State */}
+      {searchResults.length === 0 && !isSearching && (
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
+          className="p-12 text-center rounded-[28px] bg-[var(--bg-card)] border border-[var(--border-subtle)] my-8 shadow-card flex flex-col items-center justify-center"
+        >
+          <div className="w-16 h-16 rounded-full bg-amber-500/10 text-amber-500 flex items-center justify-center mb-4">
+            <SlidersHorizontal size={32} />
+          </div>
+          <h3 className="text-2xl font-extrabold text-[var(--text-primary)] mb-2">
+            {t('No destinations match your filters', language)}
+          </h3>
+          <p className="text-[var(--text-secondary)] font-medium max-w-md mb-6">
+            {t('Try lowering the minimum rating or clearing some filters to explore more breathtaking places.', language)}
+          </p>
+          <button 
+            onClick={handleResetFilters}
+            className="flex items-center gap-2 px-6 py-3 rounded-[16px] font-bold text-white bg-gradient-to-r from-[#FC6C26] to-[#FC6C26] shadow-md hover:scale-105 transition-all cursor-pointer"
+          >
+            <RotateCcw size={16} /> {t('Reset All Filters', language)}
+          </button>
+        </motion.div>
+      )}
 
       <motion.div 
         variants={staggerContainer} 
@@ -366,16 +506,16 @@ export function ExplorePage() {
                 <div>
                   <label className="block text-[13px] font-bold uppercase tracking-widest text-[var(--text-muted)] mb-4">{t('Minimum Rating', language)}</label>
                   <div className="grid grid-cols-4 gap-3">
-                    {[0, 3, 4, 4.5].map(rating => {
-                      const isRatingActive = filters.minRating === rating || (rating === 0 && !filters.minRating)
+                    {RATING_OPTIONS.map(rating => {
+                      const isRatingActive = filters.minRating === rating.value || (rating.value === 0 && !filters.minRating)
                       return (
                         <button 
-                          key={rating}
-                          onClick={() => setFilters({ minRating: rating === 0 ? undefined : rating })}
-                          className={`py-3 rounded-[16px] text-[15px] font-bold antialiased transition-all border flex items-center justify-center gap-1 ${isRatingActive ? (isMonochrome || isDark || isLight ? 'bg-[var(--text-primary)] text-[var(--bg-primary)] border-[var(--text-primary)]' : 'bg-[#111827] text-white border-[#111827]') : 'bg-[var(--bg-card)] text-[var(--text-secondary)] border-[var(--border-subtle)] hover:border-[var(--text-primary)]'}`}
+                          key={rating.value}
+                          onClick={() => setFilters({ minRating: rating.value === 0 ? undefined : rating.value })}
+                          className={`py-3 rounded-[16px] text-[15px] font-bold antialiased transition-all border flex items-center justify-center gap-1 cursor-pointer ${isRatingActive ? (isMonochrome || isDark || isLight ? 'bg-[var(--text-primary)] text-[var(--bg-primary)] border-[var(--text-primary)]' : 'bg-[#111827] text-white border-[#111827]') : 'bg-[var(--bg-card)] text-[var(--text-secondary)] border-[var(--border-subtle)] hover:border-[var(--text-primary)]'}`}
                           style={{ boxShadow: isRatingActive && !isMonochrome && !isDark && !isLight ? '0 10px 20px -10px rgba(17,24,39,0.5)' : 'none' }}
                         >
-                          {rating === 0 ? t('Any', language) : <>{rating}+ <Star size={14} className={isRatingActive && (!isMonochrome && !isDark && !isLight) ? 'text-[#FC6C26] fill-[#FC6C26]' : 'text-[var(--text-secondary)] fill-[var(--text-secondary)]'} /></>}
+                          {rating.value === 0 ? t('Any', language) : <>{rating.value}+ <Star size={14} className={isRatingActive && (!isMonochrome && !isDark && !isLight) ? 'text-[#FC6C26] fill-[#FC6C26]' : 'text-[var(--text-secondary)] fill-[var(--text-secondary)]'} /></>}
                         </button>
                       )
                     })}
@@ -387,7 +527,7 @@ export function ExplorePage() {
                   <div className="flex flex-wrap gap-3">
                     <button
                       onClick={() => setFilters({ category: undefined })}
-                      className={`px-5 py-3 rounded-[16px] text-[14px] font-bold antialiased transition-all border ${!filters.category ? (isMonochrome || isDark || isLight ? 'bg-[var(--text-primary)] text-[var(--bg-primary)] border-[var(--text-primary)]' : 'bg-[#111827] text-white border-[#111827]') : 'bg-[var(--bg-card)] text-[var(--text-secondary)] border-[var(--border-subtle)] hover:border-[var(--text-primary)]'}`}
+                      className={`px-5 py-3 rounded-[16px] text-[14px] font-bold antialiased transition-all border cursor-pointer ${!filters.category ? (isMonochrome || isDark || isLight ? 'bg-[var(--text-primary)] text-[var(--bg-primary)] border-[var(--text-primary)]' : 'bg-[#111827] text-white border-[#111827]') : 'bg-[var(--bg-card)] text-[var(--text-secondary)] border-[var(--border-subtle)] hover:border-[var(--text-primary)]'}`}
                     >
                       {t('All', language)}
                     </button>
@@ -395,17 +535,46 @@ export function ExplorePage() {
                       <button
                         key={theme.id}
                         onClick={() => setFilters({ category: theme.label })}
-                        className={`px-5 py-3 rounded-[16px] text-[14px] font-bold antialiased transition-all border flex items-center gap-2 ${filters.category === theme.label ? (isMonochrome || isDark || isLight ? 'bg-[var(--text-primary)] text-[var(--bg-primary)] border-[var(--text-primary)]' : 'bg-[#111827] text-white border-[#111827]') : 'bg-[var(--bg-card)] text-[var(--text-secondary)] border-[var(--border-subtle)] hover:border-[var(--text-primary)]'}`}
+                        className={`px-5 py-3 rounded-[16px] text-[14px] font-bold antialiased transition-all border flex items-center gap-2 cursor-pointer ${filters.category === theme.label ? (isMonochrome || isDark || isLight ? 'bg-[var(--text-primary)] text-[var(--bg-primary)] border-[var(--text-primary)]' : 'bg-[#111827] text-white border-[#111827]') : 'bg-[var(--bg-card)] text-[var(--text-secondary)] border-[var(--border-subtle)] hover:border-[var(--text-primary)]'}`}
                       >
                         <span className="drop-shadow-md">{theme.emoji}</span> {t(theme.label, language)}
                       </button>
                     ))}
                   </div>
                 </div>
+
+                <div>
+                  <label className="block text-[13px] font-bold uppercase tracking-widest text-[var(--text-muted)] mb-4">{t('Sort By', language)}</label>
+                  <div className="grid grid-cols-2 gap-2">
+                    {[
+                      { id: 'recommended', label: 'Featured / Popular' },
+                      { id: 'rating', label: 'Highest Rated' },
+                      { id: 'cost_asc', label: 'Cost: Low to High' },
+                      { id: 'cost_desc', label: 'Cost: High to Low' },
+                    ].map(s => {
+                      const isActive = (filters.sortBy || 'recommended') === s.id
+                      return (
+                        <button
+                          key={s.id}
+                          onClick={() => setFilters({ sortBy: s.id as any })}
+                          className={`py-3 px-4 rounded-[16px] text-[13px] font-bold antialiased transition-all border text-left cursor-pointer ${isActive ? (isMonochrome || isDark || isLight ? 'bg-[var(--text-primary)] text-[var(--bg-primary)] border-[var(--text-primary)]' : 'bg-[#111827] text-white border-[#111827]') : 'bg-[var(--bg-card)] text-[var(--text-secondary)] border-[var(--border-subtle)] hover:border-[var(--text-primary)]'}`}
+                        >
+                          {t(s.label, language)}
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
               </div>
 
-              <div className="mt-10">
-                <button onClick={() => { setIsFilterModalOpen(false); performSearch(); }} className="w-full bg-gradient-to-r from-[#FC6C26] to-[#FC6C26] text-white py-5 rounded-[20px] font-extrabold text-[16px] uppercase tracking-widest shadow-[0_15px_30px_-10px_rgba(252,108,38,0.5)] hover:shadow-[0_20px_40px_-10px_rgba(252,108,38,0.6)] hover:scale-[1.02] transition-all">
+              <div className="mt-10 flex gap-3">
+                <button 
+                  onClick={() => { handleResetFilters(); setIsFilterModalOpen(false); }}
+                  className="px-6 py-4 rounded-[20px] font-extrabold text-[15px] border border-[var(--border-subtle)] text-[var(--text-secondary)] hover:text-red-500 hover:border-red-400 transition-all flex items-center justify-center gap-2 cursor-pointer"
+                >
+                  <RotateCcw size={16} /> {t('Reset', language)}
+                </button>
+                <button onClick={() => { setIsFilterModalOpen(false); performSearch(); }} className="flex-1 bg-gradient-to-r from-[#FC6C26] to-[#FC6C26] text-white py-4 rounded-[20px] font-extrabold text-[16px] uppercase tracking-widest shadow-[0_15px_30px_-10px_rgba(252,108,38,0.5)] hover:shadow-[0_20px_40px_-10px_rgba(252,108,38,0.6)] hover:scale-[1.02] transition-all cursor-pointer">
                   {t('Show Results', language)}
                 </button>
               </div>

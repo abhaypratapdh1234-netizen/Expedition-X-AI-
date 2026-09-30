@@ -178,6 +178,29 @@ export const DESTINATIONS: Record<string, DestinationStat> = {
     ],
     safetyWarning: 'Avoid travelling alone after 10 PM in unfamiliar areas.',
   },
+  Mumbai: {
+    weather: '🌤 Warm Coastal',
+    tempRange: '22–34°C',
+    bestMonths: 'Oct–Mar',
+    crowdLevel: 'high',
+    safetyScore: 8,
+    budgetMin: 18000,
+    budgetMax: 75000,
+    currency: '₹',
+    lat: 19.076,
+    lng: 72.8777,
+    emoji: '🌊',
+    country: 'India',
+    description: 'City of Dreams, Marine Drive sunset, heritage architecture, and Bollywood.',
+    localTips: [
+      'Take an evening walk along Marine Drive (Queen\'s Necklace)',
+      'Use the Mumbai Local or Metro during non-peak hours (11 AM–4 PM)',
+      'Try authentic Vada Pav at Ashok or Mithibai stalls',
+      'Pre-book Elephanta Caves ferry from Gateway of India',
+      'Kala Ghoda art precinct is best explored on foot',
+    ],
+    safetyWarning: undefined,
+  },
 }
 
 // Per-destination itinerary templates (per trip type)
@@ -239,6 +262,18 @@ export const ITINERARY_TEMPLATES: Record<string, Record<string, ItineraryTemplat
       { name: 'Nobu Dubai (Dinner)', type: 'food', duration: '2h', cost: 15000, crowdPercent: 30, weatherNote: '28°C, 0% rain', aiReason: 'Award-winning Japanese fusion — book 3 days ahead', rating: 5 },
       { name: 'Address Downtown Hotel', type: 'hotel', duration: '1h', cost: 20000, crowdPercent: 10, weatherNote: '26°C, 0% rain', aiReason: 'Burj Khalifa views, walking distance saves ₹800/day on taxis', rating: 5 },
       { name: 'Gold Souk Tour', type: 'attraction', duration: '1.5h', cost: 1000, crowdPercent: 55, weatherNote: '33°C, 0% rain', aiReason: 'Morning bargaining rates 15% better than afternoon', rating: 4 },
+    ],
+  },
+  Mumbai: {
+    default: [
+      { name: 'Gateway of India & Harbor Walk', type: 'attraction', duration: '1.5h', cost: 0, crowdPercent: 65, weatherNote: '28°C, 5% rain', aiReason: 'Early morning sea breeze and best light for photography', rating: 5 },
+      { name: 'Elephanta Caves Ferry & Tour', type: 'attraction', duration: '3.5h', cost: 450, crowdPercent: 50, weatherNote: '29°C, 5% rain', aiReason: 'UNESCO World Heritage rock-cut cave temples', rating: 5 },
+      { name: 'Britannia & Co. Parsi Lunch', type: 'food', duration: '1.5h', cost: 1200, crowdPercent: 40, weatherNote: '30°C, 0% rain', aiReason: 'Iconic Berry Pulao and Parsi culinary heritage', rating: 5 },
+      { name: 'Chhatrapati Shivaji Terminus (CST)', type: 'attraction', duration: '1h', cost: 0, crowdPercent: 75, weatherNote: '29°C, 0% rain', aiReason: 'Gothic Victorian architectural marvel and UNESCO landmark', rating: 5 },
+      { name: 'Marine Drive Sunset Stroll', type: 'attraction', duration: '2h', cost: 0, crowdPercent: 55, weatherNote: '27°C, 0% rain', aiReason: 'The iconic Queen’s Necklace golden hour experience', rating: 5 },
+      { name: 'Taj Mahal Palace Hotel Dinner/Tea', type: 'food', duration: '1.5h', cost: 3500, crowdPercent: 30, weatherNote: '26°C, 0% rain', aiReason: 'Historic luxury dining overlooking the Arabian Sea', rating: 5 },
+      { name: 'Kala Ghoda Art Precinct & Colaba Causeway', type: 'attraction', duration: '2h', cost: 500, crowdPercent: 60, weatherNote: '28°C, 0% rain', aiReason: 'Vibrant boutique cafes, street markets, and art galleries', rating: 4 },
+      { name: 'Bandra Bandstand & Mount Mary Church', type: 'attraction', duration: '2h', cost: 0, crowdPercent: 45, weatherNote: '27°C, 0% rain', aiReason: 'Celebrity homes, coastal promenade, and serene cathedral', rating: 4 },
     ],
   },
 }

@@ -68,7 +68,7 @@ export function TripPlannerWorkspace() {
     <div className="h-[100dvh] bg-[var(--bg-primary)] flex flex-col relative overflow-hidden">
       {/* Ambient glows */}
       <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-gradient-to-bl from-[#FC6C26]/8 to-transparent rounded-full blur-[150px] pointer-events-none" />
-      <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-gradient-to-tr from-[#3fa796]/5 to-transparent rounded-full blur-[120px] pointer-events-none" />
+      <div className="absolute bottom-0 left-0 w-[400px] h-[400px] bg-gradient-to-tr from-black/5 dark:from-white/5 to-transparent rounded-full blur-[120px] pointer-events-none" />
 
       {/* ── Top Progress Bar ── */}
       <header className="sticky top-0 z-20 bg-[var(--bg-primary)]/90 backdrop-blur-sm border-b border-[var(--border-subtle)]">
@@ -102,17 +102,17 @@ export function TripPlannerWorkspace() {
                       <motion.div
                         animate={{
                           width: isActive ? 32 : 8,
-                          backgroundColor: isDone ? '#3fa796' : isActive ? '#FC6C26' : 'var(--border-strong)',
+                          backgroundColor: isDone ? 'var(--text-primary)' : isActive ? '#FC6C26' : 'var(--border-strong)',
                         }}
                         transition={{ type: 'spring', stiffness: 300, damping: 25 }}
                         className="h-2 rounded-full"
                       />
-                      <span className={`text-[11px] font-black tracking-[0.2em] uppercase transition-colors hidden sm:block ${isActive ? 'text-[#FC6C26]' : isDone ? 'text-[#3fa796]' : 'text-[var(--text-muted)]'}`}>
+                      <span className={`text-[11px] font-black tracking-[0.2em] uppercase transition-colors hidden sm:block ${isActive ? 'text-[#FC6C26]' : isDone ? 'text-[var(--text-primary)]' : 'text-[var(--text-muted)]'}`}>
                         {label}
                       </span>
                     </div>
                     {i < STEP_LABELS.length - 1 && (
-                      <div className={`w-6 h-px mb-4 transition-colors ${isDone ? 'bg-[#3fa796]' : 'bg-[var(--border-subtle)]'}`} />
+                      <div className={`w-6 h-px mb-4 transition-colors ${isDone ? 'bg-[var(--text-primary)]' : 'bg-[var(--border-subtle)]'}`} />
                     )}
                   </div>
                 )
