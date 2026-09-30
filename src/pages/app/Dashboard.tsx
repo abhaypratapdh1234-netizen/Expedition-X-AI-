@@ -156,6 +156,7 @@ export function Dashboard() {
     }
   ])
   const [chatLoading, setChatLoading] = useState(false)
+  const chatContainerRef = useRef<HTMLDivElement>(null)
   const chatEndRef = useRef<HTMLDivElement>(null)
   const promptSliderRef = useRef<HTMLDivElement>(null)
 
@@ -189,7 +190,12 @@ export function Dashboard() {
   }
 
   useEffect(() => {
-    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+    if (chatContainerRef.current) {
+      chatContainerRef.current.scrollTo({
+        top: chatContainerRef.current.scrollHeight,
+        behavior: 'smooth'
+      })
+    }
   }, [chatMessages, chatLoading])
 
   // ── Intelligence Engine ──
@@ -369,6 +375,7 @@ export function Dashboard() {
 
                   {/* Chat Messages */}
                   <div 
+                    ref={chatContainerRef}
                     className="flex-1 min-h-0 overflow-y-auto p-4 px-5 space-y-6 pb-2 custom-scrollbar transition-colors"
                     style={{
                       background: isDark ? '#0A0A0C' : isMonochrome ? '#000000' : 'var(--bg-primary)'
@@ -524,8 +531,7 @@ export function Dashboard() {
                       {/* Slider Track */}
                       <div 
                         ref={promptSliderRef}
-                        className="flex-1 flex items-center gap-2 overflow-x-auto scroll-smooth custom-scrollbar pb-1 pt-0.5"
-                        style={{ scrollbarWidth: 'thin' }}
+                        className="flex-1 flex items-center gap-2 overflow-x-auto scroll-smooth scrollbar-none [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden py-0.5"
                       >
                         {CHAT_PROMPTS.map((promptText, idx) => (
                           <button 
@@ -573,7 +579,12 @@ export function Dashboard() {
                         type="text"
                         value={chatInput}
                         onChange={e => setChatInput(e.target.value)}
-                        onKeyDown={e => e.key === 'Enter' && handleSendChat()}
+                        onKeyDown={e => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault()
+                            handleSendChat()
+                          }
+                        }}
                         placeholder="Ask Max AI..."
                         className="flex-1 bg-transparent pl-4 pr-3 py-2 text-[15px] outline-none"
                         style={{
