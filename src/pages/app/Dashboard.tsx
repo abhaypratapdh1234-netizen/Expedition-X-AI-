@@ -3,8 +3,20 @@ import { Link, useNavigate } from 'react-router-dom'
 import { motion, useInView, AnimatePresence } from 'framer-motion'
 import {
   Compass, Zap, Globe, Sparkles, Activity,
-  ChevronRight, Calendar, Users, ArrowUpRight, Plus, MapPin, Brain, Bot, Send, X
+  ChevronRight, ChevronLeft, Calendar, Users, ArrowUpRight, Plus, MapPin, Brain, Bot, Send, X
 } from 'lucide-react'
+
+const CHAT_PROMPTS = [
+  'Suggest local attractions 🏰',
+  'Check weather in Goa 🌴',
+  '3-Day weekend itinerary 🗺️',
+  'Estimate travel budget 💰',
+  'Smart packing checklist 🎒',
+  'Find best flight deals ✈️',
+  'Top luxury hotels 🏨',
+  'Famous food & cafes 🍛',
+  'Safety & emergency guide 🛡️'
+]
 
 import { useAuthStore } from '../../stores/authStore'
 import { useSettingsStore } from '../../stores/settingsStore'
@@ -145,6 +157,14 @@ export function Dashboard() {
   ])
   const [chatLoading, setChatLoading] = useState(false)
   const chatEndRef = useRef<HTMLDivElement>(null)
+  const promptSliderRef = useRef<HTMLDivElement>(null)
+
+  const slidePrompts = (direction: 'left' | 'right') => {
+    if (promptSliderRef.current) {
+      const scrollAmount = direction === 'left' ? -200 : 200
+      promptSliderRef.current.scrollBy({ left: scrollAmount, behavior: 'smooth' })
+    }
+  }
 
   const handleSendChat = async (presetText?: string) => {
     const textToSend = presetText || chatInput.trim()
@@ -271,25 +291,25 @@ export function Dashboard() {
           <div className="xl:col-span-8 space-y-10">
             
             {/* Telemetry Cards & AI Chatbot */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
               
               {/* Left: AI Chatbot (Theme-Aware Exact Match) */}
               <motion.div
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.2 }}
-                className="relative group rounded-2xl h-full min-h-[420px] overflow-hidden border transition-all"
+                className="relative group rounded-2xl h-[560px] max-h-[560px] overflow-hidden border transition-all flex flex-col shadow-sm"
                 style={{
                   background: isDark ? '#111111' : isMonochrome ? '#0D0D0D' : 'var(--bg-card)',
                   borderColor: isDark ? '#262626' : isMonochrome ? '#333333' : 'var(--border-default)',
                   boxShadow: isDark ? '0 10px 30px rgba(0,0,0,0.5)' : isMonochrome ? 'none' : 'var(--shadow-card)'
                 }}
               >
-                <div className="relative h-full w-full flex flex-col">
+                <div className="relative h-full w-full flex flex-col min-h-0">
                   
                   {/* Chat Header */}
                   <div 
-                    className="p-4 px-5 flex items-center justify-between text-white transition-all"
+                    className="p-4 px-5 flex items-center justify-between text-white transition-all shrink-0"
                     style={{
                       background: isDark 
                         ? 'linear-gradient(135deg, #1C1C1E 0%, #121214 100%)' 
@@ -349,7 +369,7 @@ export function Dashboard() {
 
                   {/* Chat Messages */}
                   <div 
-                    className="flex-1 overflow-y-auto p-4 px-5 space-y-6 pb-2 custom-scrollbar transition-colors"
+                    className="flex-1 min-h-0 overflow-y-auto p-4 px-5 space-y-6 pb-2 custom-scrollbar transition-colors"
                     style={{
                       background: isDark ? '#0A0A0C' : isMonochrome ? '#000000' : 'var(--bg-primary)'
                     }}
@@ -476,38 +496,68 @@ export function Dashboard() {
 
                   {/* Quick Suggestions & Input */}
                   <div 
-                    className="px-4 pb-4 pt-2 flex flex-col gap-3 transition-colors"
+                    className="px-4 pb-4 pt-2.5 flex flex-col gap-2.5 transition-colors shrink-0"
                     style={{
                       background: isDark ? '#121214' : isMonochrome ? '#0A0A0A' : 'var(--bg-card)',
                       borderTop: `1px solid ${isDark ? '#222224' : isMonochrome ? '#222222' : 'var(--border-subtle)'}`
                     }}
                   >
                     
-                    {/* Pills */}
-                    <div className="flex items-center gap-2 overflow-x-auto custom-scrollbar pb-1">
+                    {/* Horizontal Prompts Slider */}
+                    <div className="relative flex items-center gap-1.5 w-full">
+                      {/* Left arrow slider button */}
                       <button 
-                        onClick={() => handleSendChat('Suggest local attractions 🏰')}
-                        disabled={chatLoading}
-                        className="whitespace-nowrap px-4 py-2 rounded-full text-sm font-semibold transition-all shrink-0 border cursor-pointer hover:border-[#FC6C26] disabled:opacity-50 disabled:cursor-not-allowed"
+                        type="button"
+                        onClick={() => slidePrompts('left')}
+                        className="w-7 h-7 rounded-full flex items-center justify-center shrink-0 transition-all cursor-pointer border shadow-xs hover:scale-105 active:scale-95 disabled:opacity-30"
                         style={{
-                          background: isDark ? '#18181B' : isMonochrome ? '#141414' : 'var(--bg-primary)',
-                          color: isDark || isMonochrome ? '#ffffff' : 'var(--text-primary)',
-                          borderColor: isDark ? '#2E2E32' : isMonochrome ? '#333333' : 'var(--border-default)',
+                          background: isDark ? '#1C1C20' : isMonochrome ? '#161616' : 'var(--bg-primary)',
+                          borderColor: isDark ? '#2E2E34' : isMonochrome ? '#333333' : 'var(--border-default)',
+                          color: isDark || isMonochrome ? '#ffffff' : 'var(--text-primary)'
                         }}
+                        title="Slide prompts left"
+                        aria-label="Slide prompts left"
                       >
-                        Suggest local attractions 🏰
+                        <ChevronLeft size={14} />
                       </button>
-                      <button 
-                        onClick={() => handleSendChat('Check weather in Goa 🌴')}
-                        disabled={chatLoading}
-                        className="whitespace-nowrap px-4 py-2 rounded-full text-sm font-semibold transition-all shrink-0 border cursor-pointer hover:border-[#FC6C26] disabled:opacity-50 disabled:cursor-not-allowed"
-                        style={{
-                          background: isDark ? '#18181B' : isMonochrome ? '#141414' : 'var(--bg-primary)',
-                          color: isDark || isMonochrome ? '#ffffff' : 'var(--text-primary)',
-                          borderColor: isDark ? '#2E2E32' : isMonochrome ? '#333333' : 'var(--border-default)',
-                        }}
+
+                      {/* Slider Track */}
+                      <div 
+                        ref={promptSliderRef}
+                        className="flex-1 flex items-center gap-2 overflow-x-auto scroll-smooth custom-scrollbar pb-1 pt-0.5"
+                        style={{ scrollbarWidth: 'thin' }}
                       >
-                        Check weather in Goa 🌴
+                        {CHAT_PROMPTS.map((promptText, idx) => (
+                          <button 
+                            key={idx}
+                            onClick={() => handleSendChat(promptText)}
+                            disabled={chatLoading}
+                            className="whitespace-nowrap px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all shrink-0 border cursor-pointer hover:border-[#FC6C26] hover:scale-102 active:scale-98 disabled:opacity-50 disabled:cursor-not-allowed select-none shadow-xs"
+                            style={{
+                              background: isDark ? '#18181B' : isMonochrome ? '#141414' : 'var(--bg-primary)',
+                              color: isDark || isMonochrome ? '#ffffff' : 'var(--text-primary)',
+                              borderColor: isDark ? '#2E2E32' : isMonochrome ? '#333333' : 'var(--border-default)',
+                            }}
+                          >
+                            {promptText}
+                          </button>
+                        ))}
+                      </div>
+
+                      {/* Right arrow slider button */}
+                      <button 
+                        type="button"
+                        onClick={() => slidePrompts('right')}
+                        className="w-7 h-7 rounded-full flex items-center justify-center shrink-0 transition-all cursor-pointer border shadow-xs hover:scale-105 active:scale-95 disabled:opacity-30"
+                        style={{
+                          background: isDark ? '#1C1C20' : isMonochrome ? '#161616' : 'var(--bg-primary)',
+                          borderColor: isDark ? '#2E2E34' : isMonochrome ? '#333333' : 'var(--border-default)',
+                          color: isDark || isMonochrome ? '#ffffff' : 'var(--text-primary)'
+                        }}
+                        title="Slide prompts right"
+                        aria-label="Slide prompts right"
+                      >
+                        <ChevronRight size={14} />
                       </button>
                     </div>
 
