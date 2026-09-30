@@ -4,5 +4,10 @@
       "source": "/(.*)",
       "destination": "/"
     }
-  ]
+  ],
+  "build": {
+    "env": {
+      "VITE_GOOGLE_CLIENT_ID": "720560945763-ei3519t3burusndbttgvm9p16n3cjuo3.apps.googleusercontent.com"
+    }
+  }
 }

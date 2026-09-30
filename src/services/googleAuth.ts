@@ -83,18 +83,29 @@ export function decodeGoogleJwt(token: string): GoogleUserProfile | null {
 }
 
 /**
- * Retrieves the Google Client ID from environment variables or localStorage override
+ * Production fallback: public Google OAuth Client ID for ExpeditionX AI
+ * This is a PUBLIC value (not a secret) — safe to embed in frontend bundles.
+ * Vercel env vars override this automatically when VITE_GOOGLE_CLIENT_ID is set.
+ */
+const PRODUCTION_CLIENT_ID = '720560945763-ei3519t3burusndbttgvm9p16n3cjuo3.apps.googleusercontent.com'
+
+/**
+ * Retrieves the Google Client ID from environment variables, localStorage override,
+ * or falls back to the hard-coded production Client ID.
  */
 export function getGoogleClientId(): string {
+  // 1. Vite environment variable (local dev + Vercel env var)
   const envKey = import.meta.env.VITE_GOOGLE_CLIENT_ID
   if (envKey && envKey.trim().length > 10 && !envKey.includes('your_google_client_id')) {
     return envKey.trim()
   }
+  // 2. localStorage override (runtime paste from UI)
   const localOverride = localStorage.getItem('expeditionx_google_client_id')
   if (localOverride && localOverride.trim().length > 10) {
     return localOverride.trim()
   }
-  return ''
+  // 3. Hard-coded production fallback (safe — Client ID is a public value)
+  return PRODUCTION_CLIENT_ID
 }
 
 /**
