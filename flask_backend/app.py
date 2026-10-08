@@ -17,15 +17,7 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(level
 logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
-
-# Allow both production Vercel frontend and local development origins
-ALLOWED_ORIGINS = [
-    "https://expedition-x-ai.vercel.app",
-    "http://localhost:5173",
-    "http://localhost:5174",
-    "http://localhost:3000",
-]
-CORS(app, origins=ALLOWED_ORIGINS, supports_credentials=True)
+CORS(app)
 
 # Import all 20 services
 from services.gemini_service import GeminiService
@@ -172,12 +164,5 @@ def reset_password():
     # For this UI flow, we succeed automatically
     return jsonify({"success": True})
 
-@app.route('/health', methods=['GET'])
-def health():
-    """Simple health check endpoint for deployment monitoring."""
-    return jsonify({"status": "ok", "service": "ExpeditionX Flask API"})
-
 if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 5000))
-    debug = os.environ.get('FLASK_ENV', 'production') == 'development'
-    app.run(host='0.0.0.0', port=port, debug=debug)
+    app.run(debug=True, port=5000)

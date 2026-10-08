@@ -1,10 +1,7 @@
-// Production: VITE_API_URL must be set to the deployed Spring Boot backend URL.
-// Development: falls back to localhost:8080 when running locally.
-const BASE_URL = import.meta.env.VITE_API_URL ||
-  (typeof window !== 'undefined' && window.location.hostname === 'localhost'
-    ? 'http://localhost:8080/api/v1'
-    : '')  // Empty string in production without VITE_API_URL = requests will fail cleanly
-
+const BASE_URL = import.meta.env.VITE_API_URL || 
+  (typeof window !== 'undefined' && window.location.hostname === 'localhost' 
+    ? 'http://localhost:8080/api/v1' 
+    : '/api/v1')
 
 class ApiError extends Error {
   status: number
