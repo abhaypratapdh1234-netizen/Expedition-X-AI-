@@ -27,7 +27,18 @@ export const GoogleAuthModal: React.FC<GoogleAuthModalProps> = ({
   const [error, setError] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isScriptReady, setIsScriptReady] = useState(false)
+  const [copiedOrigin, setCopiedOrigin] = useState(false)
   const googleBtnRef = useRef<HTMLDivElement>(null)
+
+  const currentOrigin = typeof window !== 'undefined' ? window.location.origin : 'https://expedition-x-ai.vercel.app'
+
+  const handleCopyOrigin = () => {
+    if (navigator?.clipboard) {
+      navigator.clipboard.writeText(currentOrigin)
+      setCopiedOrigin(true)
+      setTimeout(() => setCopiedOrigin(false), 2000)
+    }
+  }
 
   const isConfigured = Boolean(
     clientId &&
@@ -215,7 +226,7 @@ export const GoogleAuthModal: React.FC<GoogleAuthModalProps> = ({
                     <span>Real Google OAuth requires a Google Client ID</span>
                   </div>
                   <p className="text-amber-800">
-                    Google requires developers to register an application in the <strong>Google Cloud Console</strong> to verify your domain (<code className="bg-amber-100/80 px-1 py-0.5 rounded font-mono text-[11px]">http://localhost:5173</code>). It is <strong>100% Free</strong>.
+                    Google requires developers to register an application in the <strong>Google Cloud Console</strong> to verify your domain (<code className="bg-amber-100/80 px-1 py-0.5 rounded font-mono text-[11px]">{currentOrigin}</code>). It is <strong>100% Free</strong>.
                   </p>
                 </div>
 
@@ -240,10 +251,19 @@ export const GoogleAuthModal: React.FC<GoogleAuthModalProps> = ({
                       Click <strong>Create Credentials &gt; OAuth client ID</strong> &gt; Select <strong>Web application</strong>.
                     </li>
                     <li>
-                      Under <strong>Authorized JavaScript origins</strong>, add: <br />
-                      <code className="bg-white px-1.5 py-0.5 rounded border border-slate-200 font-mono text-[11px] text-slate-800 inline-block mt-1">
-                        http://localhost:5173
-                      </code>
+                      Under <strong>Authorized JavaScript origins</strong>, add your origin: <br />
+                      <span className="inline-flex items-center gap-2 mt-1">
+                        <code className="bg-white px-1.5 py-0.5 rounded border border-slate-200 font-mono text-[11px] text-slate-800">
+                          {currentOrigin}
+                        </code>
+                        <button
+                          type="button"
+                          onClick={handleCopyOrigin}
+                          className="text-[10px] px-2 py-0.5 rounded bg-[#4285F4] text-white font-bold hover:bg-[#3367D6] transition-colors shrink-0"
+                        >
+                          {copiedOrigin ? '✓ Copied' : 'Copy'}
+                        </button>
+                      </span>
                     </li>
                     <li>Copy your <strong>Client ID</strong> and paste it below or in <code className="bg-white px-1 py-0.5 rounded border font-mono">.env</code>.</li>
                   </ol>

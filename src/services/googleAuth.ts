@@ -170,11 +170,13 @@ export async function triggerGoogleOAuth(
             const err = String(tokenResponse.error)
             const errDesc = (tokenResponse as any).error_description || ''
             if (err.includes('popup_closed') || err === 'popup_closed_by_user') {
-              onError('Google sign-in window was closed.')
+              const currentOrigin = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:5173'
+              onError(`Google sign-in closed. If you saw "Error 400: origin_mismatch", register ${currentOrigin} under Authorized JavaScript origins in Google Cloud Console.`)
             } else if (err.includes('access_denied')) {
               onError('Access was cancelled. Please grant permissions to sign in.')
-            } else if (err.includes('redirect_uri_mismatch')) {
-              onError('Google OAuth redirect_uri_mismatch: http://localhost:5173 must be added as Authorized redirect URI in Google Cloud Console.')
+            } else if (err.includes('redirect_uri_mismatch') || err.includes('origin_mismatch')) {
+              const currentOrigin = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:5173'
+              onError(`Google OAuth Error 400 (origin_mismatch): ${currentOrigin} must be added to Authorized JavaScript origins in Google Cloud Console.`)
             } else {
               onError(`Google Sign-In error: ${errDesc || err}`)
             }
