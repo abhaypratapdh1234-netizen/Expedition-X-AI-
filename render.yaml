@@ -1,0 +1,68 @@
+##############################################################################
+# render.yaml — Render.com Deployment Blueprint for ExpeditionX AI Backends
+#
+# WHAT THIS DEPLOYS:
+#   1. Flask Backend  — OTP email, map search, image services
+#   2. FastAPI Backend — Trip planner: weather, hidden places, route risk, emergency
+#
+# HOW TO USE:
+#   1. Go to https://dashboard.render.com
+#   2. Click "New" → "Blueprint"
+#   3. Connect your GitHub repo: abhaypratapdh1234-netizen/Expedition-X-AI-
+#   4. Render will detect this file and create both services automatically.
+#   5. After deployment, copy each service's public URL from the Render dashboard.
+#   6. Add those URLs as environment variables in your Vercel project:
+#        VITE_FLASK_API_URL  = https://expedition-x-flask.onrender.com
+#        VITE_FASTAPI_URL    = https://expedition-x-fastapi.onrender.com
+#
+# NOTE: Free-tier Render services sleep after 15 min of inactivity.
+# The first request after sleep takes ~30-60 seconds to warm up.
+# This is expected behavior on the free tier.
+##############################################################################
+
+services:
+  # ── Flask Backend (OTP email, map search, image services) ──────────────────
+  - type: web
+    name: expedition-x-flask
+    runtime: python
+    region: singapore
+    plan: free
+    rootDir: flask_backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app --bind 0.0.0.0:$PORT --workers 1 --timeout 120
+    healthCheckPath: /health
+    envVars:
+      - key: FLASK_ENV
+        value: production
+      - key: SMTP_HOST
+        sync: false
+      - key: SMTP_PORT
+        value: "587"
+      - key: SMTP_USER
+        sync: false
+      - key: SMTP_PASSWORD
+        sync: false
+      - key: SMTP_FROM
+        sync: false
+      - key: PEXELS_API_KEY
+        sync: false
+      - key: PIXABAY_API_KEY
+        sync: false
+      - key: GEOAPIFY_API_KEY
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
+
+  # ── FastAPI Backend (Trip Planner: weather, hidden places, route risk) ─────
+  - type: web
+    name: expedition-x-fastapi
+    runtime: python
+    region: singapore
+    plan: free
+    rootDir: fastapi_backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    envVars:
+      - key: ENVIRONMENT
+        value: production

@@ -74,7 +74,7 @@ app:
     refresh-token-expiry: 3153600000000  # 100 years
 
   cors:
-    allowed-origins: http://localhost:5173,http://localhost:3000
+    allowed-origins: https://expedition-x-ai.vercel.app,http://localhost:5173,http://localhost:3000
 
   # External API keys (free tiers — sign up and set via env vars)
   # External API keys

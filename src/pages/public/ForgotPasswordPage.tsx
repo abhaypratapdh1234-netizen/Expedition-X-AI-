@@ -32,7 +32,8 @@ export function ForgotPasswordPage() {
       }
     } catch (err) {
       console.error(err)
-      alert("Network error. Is the backend running?")
+      alert("Unable to reach email service. Please try again in a moment — the service may be warming up.")
+
     } finally {
       setLoading(false)
     }
